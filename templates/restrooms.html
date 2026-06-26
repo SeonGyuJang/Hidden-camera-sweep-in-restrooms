@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}화장실 목록{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3 gap-2 flex-wrap">
+  <h5 class="mb-0"><i class="fa-solid fa-restroom me-1 text-crimson"></i>화장실 목록</h5>
+  <a href="{{ url_for('restroom_new') }}" class="btn btn-sm btn-crimson ms-auto">
+    <i class="fa-solid fa-plus me-1"></i>화장실 추가
+  </a>
+</div>
+
+<!-- Filter -->
+<form class="row g-2 mb-3" method="get">
+  <div class="col-auto">
+    <select name="building_id" class="form-select form-select-sm">
+      <option value="">전체 건물</option>
+      {% for b in buildings %}
+      <option value="{{ b.id }}" {% if sel_building == b.id %}selected{% endif %}>{{ b.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <select name="gender" class="form-select form-select-sm">
+      <option value="">전체 성별</option>
+      <option value="남" {% if sel_gender == '남' %}selected{% endif %}>남자</option>
+      <option value="여" {% if sel_gender == '여' %}selected{% endif %}>여자</option>
+      <option value="공용" {% if sel_gender == '공용' %}selected{% endif %}>공용</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-outline-secondary">필터</button>
+    <a href="{{ url_for('restrooms') }}" class="btn btn-sm btn-link">초기화</a>
+  </div>
+</form>
+
+<div class="table-responsive">
+  <table class="table table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>건물</th>
+        <th>층</th>
+        <th>성별</th>
+        <th>위치 메모</th>
+        <th class="text-center">점검 기록</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in restrooms %}
+      <tr>
+        <td><strong>{{ r.building.name }}</strong></td>
+        <td>{{ r.floor }}</td>
+        <td><span class="badge badge-{{ r.gender }}">{{ r.gender }}</span></td>
+        <td class="text-muted small">{{ r.location_detail or '-' }}</td>
+        <td class="text-center">
+          {% if r.inspections %}
+            <span class="status-done"><i class="fa-solid fa-check-circle"></i> {{ r.inspections|length }}건</span>
+          {% else %}
+            <span class="status-pending"><i class="fa-solid fa-circle-xmark"></i> 미점검</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a href="{{ url_for('inspection_new') }}?restroom_id={{ r.id }}"
+             class="btn btn-xs btn-crimson btn-sm me-1">
+            <i class="fa-solid fa-plus"></i> 점검
+          </a>
+          <form method="post" action="{{ url_for('restroom_delete', rid=r.id) }}"
+                class="d-inline" onsubmit="return confirm('삭제하시겠습니까?')">
+            <button class="btn btn-xs btn-sm btn-outline-danger">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-muted py-4">등록된 화장실이 없습니다.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

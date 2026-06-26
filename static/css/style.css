@@ -1,0 +1,110 @@
+:root {
+  --crimson: #8b0000;
+  --crimson-light: #c0392b;
+  --gold: #f0c040;
+}
+
+.bg-crimson { background-color: var(--crimson) !important; }
+.text-crimson { color: var(--crimson) !important; }
+.btn-crimson {
+  background-color: var(--crimson);
+  color: #fff;
+  border: none;
+}
+.btn-crimson:hover { background-color: var(--crimson-light); color: #fff; }
+
+/* Map */
+#main-map {
+  height: 420px;
+  border-radius: 10px;
+  border: 2px solid #ddd;
+}
+
+/* Stats cards */
+.stat-card {
+  border-left: 5px solid var(--crimson);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  padding: 1rem 1.2rem;
+}
+.stat-card .stat-num {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--crimson);
+}
+
+/* Group badges */
+.badge-group-1 { background-color: #3b82f6; }
+.badge-group-2 { background-color: #10b981; }
+.badge-group-3 { background-color: #f59e0b; }
+.badge-group-4 { background-color: #8b5cf6; }
+
+/* Camera capture area */
+.capture-area {
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color .2s;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.capture-area:hover { border-color: var(--crimson); }
+.capture-area img {
+  max-height: 200px;
+  max-width: 100%;
+  border-radius: 6px;
+  object-fit: contain;
+}
+.capture-area .capture-icon {
+  font-size: 2.5rem;
+  color: #aaa;
+}
+.capture-area .capture-label {
+  font-size: .85rem;
+  color: #888;
+  margin-top: .5rem;
+}
+
+/* Gender badges */
+.badge-남 { background-color: #3b82f6; color: #fff; }
+.badge-여 { background-color: #ec4899; color: #fff; }
+.badge-공용 { background-color: #6b7280; color: #fff; }
+
+/* Inspection status */
+.status-done { color: #16a34a; font-weight: 600; }
+.status-pending { color: #dc2626; font-weight: 600; }
+
+/* Table hover */
+.table-hover tbody tr:hover { background-color: #fff5f5; }
+
+/* Progress bars */
+.progress { height: 10px; }
+
+/* Footer */
+.footer { margin-top: 3rem; }
+
+/* Mobile camera button */
+.btn-camera {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--crimson);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: .5rem 1rem;
+  font-size: .9rem;
+  cursor: pointer;
+}
+.btn-camera:hover { background: var(--crimson-light); }
+
+/* Popup for map */
+.leaflet-popup-content { min-width: 160px; }

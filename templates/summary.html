@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}현황 요약{% endblock %}
+{% block content %}
+<h5 class="mb-3"><i class="fa-solid fa-chart-bar me-1 text-crimson"></i>점검 현황 요약</h5>
+
+<!-- Group progress -->
+<div class="row g-3 mb-4">
+  {% for g in groups %}
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100">
+      <div class="card-header badge-group-{{ g }} text-white fw-bold">{{ g }}조</div>
+      <div class="card-body">
+        <div class="stat-num" style="font-size:1.8rem">{{ stats[g].done }}</div>
+        <div class="text-muted small mb-2">완료 / {{ stats[g].total }} 건</div>
+        {% if stats[g].total > 0 %}
+        <div class="progress">
+          <div class="progress-bar badge-group-{{ g }}"
+               style="width:{{ (stats[g].done / stats[g].total * 100)|int }}%"></div>
+        </div>
+        <div class="text-end small mt-1 text-muted">
+          {{ (stats[g].done / stats[g].total * 100)|int }}%
+        </div>
+        {% else %}
+        <div class="text-muted small">기록 없음</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Building breakdown -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header"><i class="fa-solid fa-building me-1"></i> 건물별 상세 현황</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>건물</th>
+          <th class="text-center">화장실 수</th>
+          <th class="text-center">점검 기록</th>
+          <th class="text-center">조치 건수</th>
+          <th>진행률</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in buildings %}
+        <tr>
+          <td><strong>{{ b.name }}</strong></td>
+          <td class="text-center">{{ b.restrooms|length }}</td>
+          <td class="text-center">
+            {% set insp_count = b.restrooms|sum(attribute='inspections')|list|length %}
+            {% set total_insp = namespace(n=0) %}
+            {% for r in b.restrooms %}{% set total_insp.n = total_insp.n + r.inspections|length %}{% endfor %}
+            {{ total_insp.n }}
+          </td>
+          <td class="text-center">
+            {% set actions = namespace(n=0) %}
+            {% for r in b.restrooms %}
+              {% for i in r.inspections %}{% if i.action_taken %}{% set actions.n = actions.n + 1 %}{% endif %}{% endfor %}
+            {% endfor %}
+            {% if actions.n > 0 %}
+            <span class="badge bg-warning text-dark">{{ actions.n }}</span>
+            {% else %}-{% endif %}
+          </td>
+          <td>
+            {% set done = namespace(n=0) %}
+            {% for r in b.restrooms %}{% if r.inspections %}{% set done.n = done.n + 1 %}{% endif %}{% endfor %}
+            {% set pct = (done.n / b.restrooms|length * 100)|int if b.restrooms|length > 0 else 0 %}
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1">
+                <div class="progress-bar bg-crimson" style="width:{{ pct }}%"></div>
+              </div>
+              <span class="small text-muted" style="min-width:35px">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex gap-2">
+  <a href="{{ url_for('api_summary_json') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+    <i class="fa-solid fa-download me-1"></i>JSON 내보내기
+  </a>
+</div>
+{% endblock %}

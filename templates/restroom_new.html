@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}화장실 추가{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-crimson text-white">
+        <i class="fa-solid fa-restroom me-2"></i>화장실 추가
+      </div>
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label fw-bold">건물 <span class="text-danger">*</span></label>
+            <select name="building_id" class="form-select" required>
+              <option value="">건물 선택</option>
+              {% for b in buildings %}
+              <option value="{{ b.id }}">{{ b.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">층 <span class="text-danger">*</span></label>
+            <input type="text" name="floor" class="form-control" placeholder="예: 1F, 2F, B1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">성별 <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="gender" value="남" id="g_m" required>
+                <label class="form-check-label" for="g_m">남자</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="gender" value="여" id="g_f">
+                <label class="form-check-label" for="g_f">여자</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="gender" value="공용" id="g_u">
+                <label class="form-check-label" for="g_u">공용</label>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">위치 메모</label>
+            <input type="text" name="location_detail" class="form-control"
+                   placeholder="예: 중앙 복도 끝, 엘리베이터 옆 등">
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-crimson px-4">저장</button>
+            <a href="{{ url_for('restrooms') }}" class="btn btn-outline-secondary">취소</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

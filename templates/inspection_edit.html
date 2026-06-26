@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}점검 기록 수정 #{{ insp.id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-crimson text-white">
+        <i class="fa-solid fa-pen me-2"></i>점검 기록 수정 #{{ insp.id }}
+      </div>
+      <div class="card-body">
+        <form method="post" id="inspectionForm">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">화장실 <span class="text-danger">*</span></label>
+              <select name="restroom_id" class="form-select" required>
+                {% for r in restrooms %}
+                <option value="{{ r.id }}" {% if r.id == insp.restroom_id %}selected{% endif %}>
+                  {{ r.building.name }} {{ r.floor }} {{ r.gender }}화장실
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">조</label>
+              <select name="group_number" class="form-select">
+                {% for g in range(1,5) %}
+                <option value="{{ g }}" {% if insp.group_number == g %}selected{% endif %}>{{ g }}조</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">점검자</label>
+              <input type="text" name="inspector_name" class="form-control"
+                     value="{{ insp.inspector_name or '' }}">
+            </div>
+          </div>
+
+          <h6 class="fw-bold text-crimson border-bottom pb-2 mb-3">
+            <i class="fa-solid fa-camera me-1"></i> 사진 (재촬영 시에만 교체됩니다)
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">점검 전 사진</label>
+              {% if insp.before_photo %}
+              <div class="mb-2">
+                <img src="{{ insp.before_photo }}" class="img-fluid rounded border" style="max-height:150px">
+              </div>
+              {% endif %}
+              <div class="capture-area" id="beforeArea">
+                <img id="beforePreview" src="" style="display:none">
+                <div id="beforePlaceholder">
+                  <i class="fa-solid fa-camera capture-icon"></i>
+                  <div class="capture-label">새 사진으로 교체</div>
+                </div>
+              </div>
+              <input type="file" id="beforeFile" accept="image/*" capture="environment"
+                     class="d-none" onchange="handleFile(event,'before')">
+              <input type="hidden" name="before_photo" id="beforeData">
+              <div class="mt-2 d-flex gap-2">
+                <button type="button" class="btn-camera" onclick="openCamera('before')">
+                  <i class="fa-solid fa-camera"></i> 카메라
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        onclick="document.getElementById('beforeFile').click()">파일</button>
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="clearPhoto('before')">지우기</button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">점검 후 사진</label>
+              {% if insp.after_photo %}
+              <div class="mb-2">
+                <img src="{{ insp.after_photo }}" class="img-fluid rounded border" style="max-height:150px">
+              </div>
+              {% endif %}
+              <div class="capture-area" id="afterArea">
+                <img id="afterPreview" src="" style="display:none">
+                <div id="afterPlaceholder">
+                  <i class="fa-solid fa-camera capture-icon"></i>
+                  <div class="capture-label">새 사진으로 교체</div>
+                </div>
+              </div>
+              <input type="file" id="afterFile" accept="image/*" capture="environment"
+                     class="d-none" onchange="handleFile(event,'after')">
+              <input type="hidden" name="after_photo" id="afterData">
+              <div class="mt-2 d-flex gap-2">
+                <button type="button" class="btn-camera" onclick="openCamera('after')">
+                  <i class="fa-solid fa-camera"></i> 카메라
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        onclick="document.getElementById('afterFile').click()">파일</button>
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="clearPhoto('after')">지우기</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="cameraModal" class="d-none mb-3">
+            <div class="card">
+              <div class="card-header bg-dark text-white d-flex">
+                <span id="cameraLabel">카메라</span>
+                <button type="button" class="btn btn-sm btn-light ms-auto" onclick="closeCamera()">닫기</button>
+              </div>
+              <div class="card-body p-0 text-center bg-black">
+                <video id="cameraVideo" autoplay playsinline style="width:100%;max-height:300px;object-fit:contain"></video>
+              </div>
+              <div class="card-footer text-center">
+                <button type="button" class="btn btn-crimson px-4" onclick="capturePhoto()">
+                  <i class="fa-solid fa-circle me-1"></i>촬영
+                </button>
+                <button type="button" class="btn btn-outline-secondary ms-2" onclick="switchCamera()">
+                  <i class="fa-solid fa-rotate"></i>
+                </button>
+              </div>
+            </div>
+            <canvas id="cameraCanvas" class="d-none"></canvas>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="action_taken"
+                     id="actionTaken" value="1"
+                     {% if insp.action_taken %}checked{% endif %}
+                     onchange="toggleActionDetail(this)">
+              <label class="form-check-label fw-bold" for="actionTaken">조치 사항 있음</label>
+            </div>
+          </div>
+          <div class="mb-3" id="actionDetailDiv"
+               style="{{ '' if insp.action_taken else 'display:none' }}">
+            <label class="form-label">조치 내용</label>
+            <textarea name="action_detail" class="form-control" rows="2">{{ insp.action_detail or '' }}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">특이사항</label>
+            <textarea name="notes" class="form-control" rows="3">{{ insp.notes or '' }}</textarea>
+          </div>
+          <div class="mb-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="completed"
+                     id="completed" value="1" {% if insp.completed %}checked{% endif %}>
+              <label class="form-check-label fw-bold" for="completed">점검 완료</label>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-crimson px-4">저장</button>
+            <a href="{{ url_for('inspection_detail', iid=insp.id) }}" class="btn btn-outline-secondary">취소</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script>
+function toggleActionDetail(cb) {
+  document.getElementById('actionDetailDiv').style.display = cb.checked ? '' : 'none';
+}
+</script>
+{% endblock %}

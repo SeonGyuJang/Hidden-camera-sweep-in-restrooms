@@ -77,10 +77,17 @@ body {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .t-header-title .ku-mark {
-  font-size: 12px; font-weight: 700;
-  color: var(--t1);
-  letter-spacing: .1px;
+  font-size: 11px; font-weight: 800;
+  background: var(--primary); color: #fff;
+  padding: 2px 7px; border-radius: 6px;
+  letter-spacing: .3px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.t-header-sub {
+  font-size: clamp(10px, 3vw, 14px);
+  font-weight: 600; color: var(--t1);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
 }
 .t-header-actions { display: flex; gap: 4px; }
 .t-header-btn {

@@ -30,7 +30,7 @@ if database_url.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
-app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)

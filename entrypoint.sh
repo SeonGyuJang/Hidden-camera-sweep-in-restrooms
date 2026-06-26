@@ -15,5 +15,6 @@ exec gunicorn app:app \
   --bind 0.0.0.0:8080 \
   --workers 1 \
   --timeout 120 \
+  --limit-request-body 209715200 \
   --access-logfile - \
   --error-logfile -

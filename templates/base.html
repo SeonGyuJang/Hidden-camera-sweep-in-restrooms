@@ -179,12 +179,33 @@ function camFlip() {
   _camFacing = _camFacing === 'environment' ? 'user' : 'environment';
   _camStart();
 }
+// ── Image resize (아이폰 원본 15MB → ~400KB) ──────────────────────────────────
+const IMG_MAX_W = 1920, IMG_MAX_H = 1440, IMG_Q = 0.82;
+function resizeDataUrl(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > IMG_MAX_W) { h = Math.round(h * IMG_MAX_W / w); w = IMG_MAX_W; }
+      if (h > IMG_MAX_H) { w = Math.round(w * IMG_MAX_H / h); h = IMG_MAX_H; }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', IMG_Q));
+    };
+    img.src = dataUrl;
+  });
+}
+
 function camSnap() {
   const v = document.getElementById('camVideo');
   const c = document.getElementById('camCanvas');
-  c.width = v.videoWidth; c.height = v.videoHeight;
-  c.getContext('2d').drawImage(v, 0, 0);
-  const data = c.toDataURL('image/jpeg', .88);
+  let w = v.videoWidth, h = v.videoHeight;
+  if (w > IMG_MAX_W) { h = Math.round(h * IMG_MAX_W / w); w = IMG_MAX_W; }
+  if (h > IMG_MAX_H) { w = Math.round(w * IMG_MAX_H / h); h = IMG_MAX_H; }
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(v, 0, 0, w, h);
+  const data = c.toDataURL('image/jpeg', IMG_Q);
   if (window._camCallback) window._camCallback(_camTarget, data);
   camClose();
 }

@@ -135,7 +135,7 @@ function photoAddSlot() {
 function photoFileSelected(e) {
   const f = e.target.files[0]; if (!f) return;
   const r = new FileReader();
-  r.onload = ev => photoInsert(ev.target.result);
+  r.onload = async ev => photoInsert(await resizeDataUrl(ev.target.result));
   r.readAsDataURL(f);
   e.target.value = '';
 }

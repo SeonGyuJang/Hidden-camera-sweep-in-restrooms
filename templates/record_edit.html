@@ -28,9 +28,10 @@
   <div class="t-form">
     <div class="t-form-group" style="padding:14px 16px">
       <div id="photoGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        {% for idx, photo in insp.photos_list|enumerate %}
+        {% for idx, filename in insp.photos_list|enumerate %}
         <div id="photoCell_{{ idx }}" style="position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden">
-          <img src="{{ photo }}" style="width:100%;height:100%;object-fit:cover">
+          <img src="{{ url_for('serve_photo', filename=filename) }}"
+               style="width:100%;height:100%;object-fit:cover" loading="lazy">
           <button type="button" onclick="photoRemove({{ idx }})"
             style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">
             <i class="fa-solid fa-xmark"></i>
@@ -39,8 +40,8 @@
         {% endfor %}
       </div>
       <div id="photoHiddens">
-        {% for idx, photo in insp.photos_list|enumerate %}
-        <input type="hidden" name="photos[]" id="photoData_{{ idx }}" value="{{ photo }}">
+        {% for idx, filename in insp.photos_list|enumerate %}
+        <input type="hidden" name="photos[]" id="photoData_{{ idx }}" value="{{ filename }}">
         {% endfor %}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">

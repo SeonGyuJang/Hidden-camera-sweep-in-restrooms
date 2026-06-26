@@ -1,6 +1,7 @@
 import os
 import base64
 import json
+import uuid
 from datetime import datetime
 from flask import (
     Flask, render_template, request, redirect,
@@ -15,7 +16,14 @@ load_dotenv()
 
 app = Flask(__name__)
 
-database_url = os.environ.get("DATABASE_URL", "sqlite:///inspection.db")
+# ── Storage paths ─────────────────────────────────────────────────────────────
+# On fly.io: DATA_DIR=/data (volume mount).  Locally: DATA_DIR=. (project root)
+DATA_DIR    = os.environ.get("DATA_DIR", ".")
+UPLOAD_DIR  = os.path.join(DATA_DIR, "photos")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+database_url = os.environ.get("DATABASE_URL",
+                               f"sqlite:///{os.path.join(DATA_DIR, 'inspection.db')}")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
@@ -26,6 +34,18 @@ app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+
+def save_photo(data_url: str) -> str:
+    """Base64 data URL → 파일 저장 → 파일명 반환"""
+    header, encoded = data_url.split(",", 1)
+    mime = header.split(":")[1].split(";")[0]
+    ext  = "jpg" if "jpeg" in mime else mime.split("/")[1]
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    path = os.path.join(UPLOAD_DIR, filename)
+    with open(path, "wb") as f:
+        f.write(base64.b64decode(encoded))
+    return filename
 
 # ── Static team config ────────────────────────────────────────────────────────
 
@@ -212,9 +232,8 @@ class Inspection(db.Model):
             "notes": self.notes or "",
             "completed": self.completed,
             "checklist_score": self.checklist_score,
-            "has_before": bool(self.before_photo),
-            "has_after": bool(self.after_photo),
-            "photos": json.loads(self.photos) if self.photos else [],
+            "photo_count": len(self.photos_list),
+            "photos": [f"/uploads/{f}" for f in self.photos_list],
             "photo_lat": self.photo_lat,
             "photo_lng": self.photo_lng,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
@@ -350,9 +369,11 @@ def inspect(rid):
             restroom_id=rid,
             team=request.form.get("team", "A"),
             inspector_name=request.form.get("inspector_name", ""),
-            before_photo=request.form.get("before_photo") or None,
-            after_photo=request.form.get("after_photo") or None,
-            photos=json.dumps([p for p in request.form.getlist("photos[]") if p]) or None,
+            before_photo=None,
+            after_photo=None,
+            photos=json.dumps([
+                save_photo(p) for p in request.form.getlist("photos[]") if p
+            ]) or None,
             photo_lat=float(lat) if lat else None,
             photo_lng=float(lng) if lng else None,
             chk_partition=bool(request.form.get("chk_partition")),
@@ -409,13 +430,13 @@ def record_edit(iid):
     if request.method == "POST":
         insp.team = request.form.get("team", insp.team)
         insp.inspector_name = request.form.get("inspector_name", "")
-        if request.form.get("before_photo"):
-            insp.before_photo = request.form["before_photo"]
-        if request.form.get("after_photo"):
-            insp.after_photo  = request.form["after_photo"]
-        new_photos = [p for p in request.form.getlist("photos[]") if p]
-        if new_photos:
-            insp.photos = json.dumps(new_photos)
+        new_raw = [p for p in request.form.getlist("photos[]") if p]
+        # Separate already-saved filenames from new base64 uploads
+        saved, uploads = [], []
+        for p in new_raw:
+            (uploads if p.startswith("data:") else saved).append(p)
+        new_files = [save_photo(p) for p in uploads]
+        insp.photos = json.dumps(saved + new_files) or None
         insp.chk_partition = bool(request.form.get("chk_partition"))
         insp.chk_ceiling   = bool(request.form.get("chk_ceiling"))
         insp.chk_drain     = bool(request.form.get("chk_drain"))
@@ -441,25 +462,31 @@ def record_delete(iid):
     return redirect(url_for("records"))
 
 
+@app.route("/uploads/<path:filename>")
+def serve_photo(filename):
+    """Volume에 저장된 사진 파일 서빙"""
+    path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.isfile(path):
+        return "없음", 404
+    return send_file(path)
+
+
 @app.route("/records/<int:iid>/photo/<which>")
 def record_photo(iid, which):
+    """개별 사진 다운로드"""
     insp = Inspection.query.get_or_404(iid)
-    if which == "before":
-        data_url = insp.before_photo
-    elif which == "after":
-        data_url = insp.after_photo
-    else:
-        try:
-            idx = int(which)
-            photos = json.loads(insp.photos) if insp.photos else []
-            data_url = photos[idx] if 0 <= idx < len(photos) else None
-        except (ValueError, IndexError):
-            data_url = None
-    if not data_url:
+    try:
+        idx = int(which)
+        photos = json.loads(insp.photos) if insp.photos else []
+        filename = photos[idx] if 0 <= idx < len(photos) else None
+    except (ValueError, IndexError):
+        filename = None
+    if not filename:
         return "없음", 404
-    header, encoded = data_url.split(",", 1)
-    mime = header.split(":")[1].split(";")[0]
-    return send_file(io.BytesIO(base64.b64decode(encoded)), mimetype=mime,
+    path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.isfile(path):
+        return "없음", 404
+    return send_file(path, as_attachment=True,
                      download_name=f"insp_{iid}_{which}.jpg")
 
 

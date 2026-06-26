@@ -76,6 +76,28 @@
 </nav>
 {% endblock %}
 
+<!-- Team picker sheet -->
+<div class="t-overlay" id="teamPickerOverlay" onclick="closeTeamPicker()"></div>
+<div class="t-sheet" id="teamPickerSheet">
+  <div class="t-sheet-handle"></div>
+  <div class="t-sheet-title">팀 선택</div>
+  <div class="t-sheet-body">
+    {% for tid, t in TEAMS.items() %}
+    <button class="t-sheet-item" onclick="pickTeam('{{ tid }}')"
+            style="--team-color:{{ t.color }};--team-bg:{{ t.bg }}">
+      <div class="t-sheet-item-icon">
+        <i class="fa-solid fa-{{ 'person-walking' if t.move_type == '도보' else 'car' }}"></i>
+      </div>
+      <div class="t-sheet-item-body">
+        <div class="t-sheet-item-name">{{ t.name }}</div>
+        <div class="t-sheet-item-members">{{ t.members|join(' · ') }}</div>
+      </div>
+      <i class="fa-solid fa-chevron-right" style="font-size:12px;color:var(--t4)"></i>
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
 <!-- Drawer overlay -->
 <div class="t-overlay" id="overlay" onclick="closeDrawer()"></div>
 
@@ -216,12 +238,27 @@ function camClose() {
   document.body.style.overflow = '';
 }
 
-// ── Inspect nav button → route to last building or team select ─────────────
+// ── Team picker sheet ──────────────────────────────────────────────────────
+function openTeamPicker() {
+  document.getElementById('teamPickerOverlay').classList.add('active');
+  document.getElementById('teamPickerSheet').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeTeamPicker() {
+  document.getElementById('teamPickerOverlay').classList.remove('active');
+  document.getElementById('teamPickerSheet').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function pickTeam(tid) {
+  saveTeam(tid);
+  closeTeamPicker();
+  window.location.href = '/team/' + tid;
+}
+
+// ── Inspect nav button → always show team picker ───────────────────────────
 document.getElementById('inspectNavBtn').addEventListener('click', e => {
   e.preventDefault();
-  const tid = loadTeam();
-  if (tid) window.location.href = '/team/' + tid;
-  else window.location.href = '/';
+  openTeamPicker();
 });
 </script>
 {% block scripts %}{% endblock %}

@@ -428,6 +428,12 @@ def init_db():
 
 if __name__ == "__main__":
     with app.app_context():
+        # 스키마 변경 시 컬럼 누락 오류가 나면 DB를 초기화한다 (개발 환경 전용)
+        try:
+            Building.query.count()
+        except Exception:
+            print("[init] 스키마 변경 감지 → DB 초기화 중...")
+            db.drop_all()
         db.create_all()
         seed_buildings()
     app.run(debug=True, host="0.0.0.0", port=5000)

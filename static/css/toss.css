@@ -72,12 +72,8 @@ body {
   z-index: 100;
 }
 .t-header-title {
-  display: flex; flex-direction: column; gap: 2px;
-  min-width: 0; overflow: hidden;
-}
-.t-header-breadcrumb {
-  display: flex; align-items: center; gap: 5px;
-  white-space: nowrap; overflow: hidden;
+  display: flex; align-items: center; gap: 6px;
+  min-width: 0; overflow: hidden; white-space: nowrap;
 }
 .t-header-title .ku-mark {
   font-size: 11px; font-weight: 800;
@@ -87,13 +83,8 @@ body {
   white-space: nowrap; flex-shrink: 0;
 }
 .t-header-crumb {
-  font-size: 11px; font-weight: 500; color: var(--t3);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  min-width: 0;
-}
-.t-header-sub {
-  font-size: clamp(10px, 3.2vw, 14px);
-  font-weight: 700; color: var(--t1);
+  font-size: clamp(9px, 2.8vw, 12px);
+  font-weight: 500; color: var(--t2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
 }

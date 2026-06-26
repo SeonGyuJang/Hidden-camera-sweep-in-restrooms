@@ -24,36 +24,36 @@
     </div>
   </div>
 
-  <div class="t-section-title">사진 재촬영 (기존 사진 유지 시 건너뜀)</div>
+  <div class="t-section-title">활동 사진 <span id="photoCountBadge" style="font-size:12px;color:var(--t3);font-weight:600">{{ insp.photos_list|length }}장</span></div>
   <div class="t-form">
-    <div class="t-form-group">
-      <div class="photo-pair">
-        {% for which, label in [('before','점검 전'),('after','점검 후')] %}
-        <div>
-          <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase">{{ label }}</div>
-          {% set photo = insp.before_photo if which == 'before' else insp.after_photo %}
-          {% if photo %}
-          <div style="position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:4/3;margin-bottom:6px">
-            <img src="{{ photo }}" style="width:100%;height:100%;object-fit:cover">
-            <div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:6px">현재</div>
-          </div>
-          {% endif %}
-          <div class="photo-slot" id="{{ which }}Slot" onclick="camOpen('{{ which }}','{{ label }}')">
-            <img id="{{ which }}Img" src="" style="display:none">
-            <div id="{{ which }}Empty" style="text-align:center">
-              <div class="photo-slot-icon"><i class="fa-solid fa-arrow-rotate-right"></i></div>
-              <div class="photo-slot-label">교체</div>
-            </div>
-            <div class="photo-tag">새 사진</div>
-          </div>
-          <input type="file" id="{{ which }}File" accept="image/*" capture="environment"
-                 style="display:none" onchange="filePhoto(event,'{{ which }}')">
-          <input type="hidden" name="{{ which }}_photo" id="{{ which }}Data">
-          <button type="button" onclick="document.getElementById('{{ which }}File').click()"
-                  style="width:100%;margin-top:6px;padding:8px;background:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer">갤러리</button>
+    <div class="t-form-group" style="padding:14px 16px">
+      <div id="photoGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        {% for idx, photo in insp.photos_list|enumerate %}
+        <div id="photoCell_{{ idx }}" style="position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden">
+          <img src="{{ photo }}" style="width:100%;height:100%;object-fit:cover">
+          <button type="button" onclick="photoRemove({{ idx }})"
+            style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
         {% endfor %}
       </div>
+      <div id="photoHiddens">
+        {% for idx, photo in insp.photos_list|enumerate %}
+        <input type="hidden" name="photos[]" id="photoData_{{ idx }}" value="{{ photo }}">
+        {% endfor %}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button type="button" onclick="photoAddSlot()"
+                style="padding:12px;background:var(--bg);border:1.5px dashed var(--border);border-radius:12px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          <i class="fa-solid fa-camera"></i> 카메라
+        </button>
+        <button type="button" onclick="_photoAddIdx=_photoCount;document.getElementById('photoFileInput').click()"
+                style="padding:12px;background:var(--bg);border:1.5px dashed var(--border);border-radius:12px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          <i class="fa-solid fa-image"></i> 갤러리
+        </button>
+      </div>
+      <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="photoFileSelected(event)">
     </div>
   </div>
 
@@ -118,16 +118,57 @@
 </form>
 
 <script>
-window._camCallback = function(t, d) { setPhoto(t, d); };
-function setPhoto(t, d) {
-  document.getElementById(t+'Data').value=d;
-  const i=document.getElementById(t+'Img'); i.src=d; i.style.display='block';
-  document.getElementById(t+'Empty').style.display='none';
+let _photoCount = {{ insp.photos_list|length }};
+let _photoAddIdx = null;
+
+function photoUpdateCount() {
+  const n = document.querySelectorAll('#photoHiddens input[name="photos[]"]').length;
+  document.getElementById('photoCountBadge').textContent = n + '장';
 }
-function filePhoto(e, t) {
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=ev=>setPhoto(t,ev.target.result); r.readAsDataURL(f);
+
+function photoAddSlot() {
+  _photoAddIdx = _photoCount;
+  camOpen('_photo_' + _photoCount, '📷 활동 사진');
 }
+
+function photoFileSelected(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => photoInsert(ev.target.result);
+  r.readAsDataURL(f);
+  e.target.value = '';
+}
+
+function photoInsert(dataUrl) {
+  const idx = _photoCount++;
+  const grid = document.getElementById('photoGrid');
+  const cell = document.createElement('div');
+  cell.id = 'photoCell_' + idx;
+  cell.style.cssText = 'position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden';
+  cell.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">
+    <button type="button" onclick="photoRemove(${idx})"
+      style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <i class="fa-solid fa-xmark"></i></button>`;
+  grid.appendChild(cell);
+  const hidden = document.createElement('input');
+  hidden.type = 'hidden'; hidden.name = 'photos[]';
+  hidden.id = 'photoData_' + idx; hidden.value = dataUrl;
+  document.getElementById('photoHiddens').appendChild(hidden);
+  photoUpdateCount();
+}
+
+function photoRemove(idx) {
+  const cell = document.getElementById('photoCell_' + idx);
+  if (cell) cell.remove();
+  const hidden = document.getElementById('photoData_' + idx);
+  if (hidden) hidden.remove();
+  photoUpdateCount();
+}
+
+window._camCallback = function(target, dataUrl) {
+  if (target.startsWith('_photo_')) photoInsert(dataUrl);
+};
+
 function toggleCheck(key) {
   const cb=document.getElementById('chk_'+key);
   const box=document.getElementById('chkBox_'+key);

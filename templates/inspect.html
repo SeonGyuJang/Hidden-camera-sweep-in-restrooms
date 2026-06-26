@@ -69,53 +69,22 @@
   </div>
 
   <!-- Photos -->
-  <div class="t-section-title">📷 점검 사진</div>
+  <div class="t-section-title">📷 활동 사진 <span id="photoCountBadge" style="font-size:12px;font-weight:600;color:var(--t3)">0장</span></div>
   <div class="t-form">
-    <div class="t-form-group">
-      <div class="photo-pair">
-        <!-- Before -->
-        <div>
-          <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">점검 전</div>
-          <div class="photo-slot" id="beforeSlot" onclick="camOpen('before','📷 점검 전')">
-            <img id="beforeImg" src="" style="display:none">
-            <div id="beforeEmpty" style="text-align:center">
-              <div class="photo-slot-icon"><i class="fa-solid fa-camera"></i></div>
-              <div class="photo-slot-label">터치하여 촬영</div>
-            </div>
-            <div class="photo-tag">점검 전</div>
-            <button type="button" class="photo-del" id="beforeDel" style="display:none"
-                    onclick="delPhoto(event,'before')"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-          <input type="file" id="beforeFile" accept="image/*" capture="environment"
-                 class="d-none" style="display:none" onchange="filePhoto(event,'before')">
-          <input type="hidden" name="before_photo" id="beforeData">
-          <button type="button" onclick="document.getElementById('beforeFile').click()"
-                  style="width:100%;margin-top:6px;padding:8px;background:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer">
-            갤러리
-          </button>
-        </div>
-        <!-- After -->
-        <div>
-          <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">점검 후</div>
-          <div class="photo-slot" id="afterSlot" onclick="camOpen('after','📷 점검 후')">
-            <img id="afterImg" src="" style="display:none">
-            <div id="afterEmpty" style="text-align:center">
-              <div class="photo-slot-icon"><i class="fa-solid fa-camera"></i></div>
-              <div class="photo-slot-label">터치하여 촬영</div>
-            </div>
-            <div class="photo-tag">점검 후</div>
-            <button type="button" class="photo-del" id="afterDel" style="display:none"
-                    onclick="delPhoto(event,'after')"><i class="fa-solid fa-xmark"></i></button>
-          </div>
-          <input type="file" id="afterFile" accept="image/*" capture="environment"
-                 class="d-none" style="display:none" onchange="filePhoto(event,'after')">
-          <input type="hidden" name="after_photo" id="afterData">
-          <button type="button" onclick="document.getElementById('afterFile').click()"
-                  style="width:100%;margin-top:6px;padding:8px;background:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer">
-            갤러리
-          </button>
-        </div>
+    <div class="t-form-group" style="padding:14px 16px">
+      <div id="photoGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button type="button" onclick="photoAddSlot()"
+                style="padding:12px;background:var(--bg);border:1.5px dashed var(--border);border-radius:12px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          <i class="fa-solid fa-camera"></i> 카메라
+        </button>
+        <button type="button" onclick="_photoAddIdx=_photoCount;document.getElementById('photoFileInput').click()"
+                style="padding:12px;background:var(--bg);border:1.5px dashed var(--border);border-radius:12px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          <i class="fa-solid fa-image"></i> 갤러리
+        </button>
       </div>
+      <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="photoFileSelected(event)">
+      <div id="photoHiddens"></div>
     </div>
   </div>
 
@@ -216,31 +185,68 @@
   }, {timeout: 8000});
 })();
 
-// Photo callbacks
-window._camCallback = function(target, dataUrl) { setPhoto(target, dataUrl); };
+// Multi-photo system
+let _photoCount = 0;
+let _photoAddMode = null; // 'cam' or 'file'
+let _photoAddIdx = null;
 
-function setPhoto(t, d) {
-  document.getElementById(t+'Data').value = d;
-  const img = document.getElementById(t+'Img');
-  img.src = d; img.style.display = 'block';
-  document.getElementById(t+'Empty').style.display = 'none';
-  document.getElementById(t+'Del').style.display = 'flex';
+function photoUpdateCount() {
+  const n = document.querySelectorAll('#photoHiddens input[name="photos[]"]').length;
+  document.getElementById('photoCountBadge').textContent = n + '장';
 }
-function delPhoto(e, t) {
-  e.stopPropagation();
-  document.getElementById(t+'Data').value = '';
-  const img = document.getElementById(t+'Img');
-  img.src = ''; img.style.display = 'none';
-  document.getElementById(t+'Empty').style.display = '';
-  document.getElementById(t+'Del').style.display = 'none';
-  document.getElementById(t+'File').value = '';
+
+function photoAddSlot() {
+  // Show choice: camera or gallery
+  _photoAddMode = null;
+  _photoAddIdx = _photoCount;
+  // Try camera first
+  camOpen('_photo_' + _photoCount, '📷 활동 사진');
 }
-function filePhoto(e, t) {
+
+function photoFileSelected(e) {
   const f = e.target.files[0]; if (!f) return;
   const r = new FileReader();
-  r.onload = ev => setPhoto(t, ev.target.result);
+  r.onload = ev => photoInsert(ev.target.result);
   r.readAsDataURL(f);
+  e.target.value = '';
 }
+
+function photoInsert(dataUrl) {
+  const idx = _photoCount++;
+  const grid = document.getElementById('photoGrid');
+  const cell = document.createElement('div');
+  cell.id = 'photoCell_' + idx;
+  cell.style.cssText = 'position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden';
+  cell.innerHTML = `
+    <img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">
+    <button type="button" onclick="photoRemove(${idx})"
+      style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  `;
+  grid.appendChild(cell);
+  const hidden = document.createElement('input');
+  hidden.type = 'hidden';
+  hidden.name = 'photos[]';
+  hidden.id = 'photoData_' + idx;
+  hidden.value = dataUrl;
+  document.getElementById('photoHiddens').appendChild(hidden);
+  photoUpdateCount();
+}
+
+function photoRemove(idx) {
+  const cell = document.getElementById('photoCell_' + idx);
+  if (cell) cell.remove();
+  const hidden = document.getElementById('photoData_' + idx);
+  if (hidden) hidden.remove();
+  photoUpdateCount();
+}
+
+window._camCallback = function(target, dataUrl) {
+  if (target.startsWith('_photo_')) {
+    photoInsert(dataUrl);
+  }
+};
 
 // Checklist
 const totalItems = {{ CHECKLIST|length }};

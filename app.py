@@ -164,6 +164,7 @@ class Inspection(db.Model):
     inspector_name = db.Column(db.String(100))
     before_photo   = db.Column(db.Text)
     after_photo    = db.Column(db.Text)
+    photos         = db.Column(db.Text)   # JSON array of base64 data URLs
     photo_lat      = db.Column(db.Float)
     photo_lng      = db.Column(db.Float)
     # Checklist (boolean per item)
@@ -180,6 +181,15 @@ class Inspection(db.Model):
     completed      = db.Column(db.Boolean, default=False)
     created_at     = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at     = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @property
+    def photos_list(self):
+        if self.photos:
+            try:
+                return json.loads(self.photos)
+            except Exception:
+                return []
+        return []
 
     @property
     def checklist_score(self):
@@ -204,6 +214,7 @@ class Inspection(db.Model):
             "checklist_score": self.checklist_score,
             "has_before": bool(self.before_photo),
             "has_after": bool(self.after_photo),
+            "photos": json.loads(self.photos) if self.photos else [],
             "photo_lat": self.photo_lat,
             "photo_lng": self.photo_lng,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
@@ -220,6 +231,8 @@ def seed_buildings():
 
 
 # ── Context processor ─────────────────────────────────────────────────────────
+
+app.jinja_env.filters['enumerate'] = enumerate
 
 @app.context_processor
 def inject_globals():
@@ -339,6 +352,7 @@ def inspect(rid):
             inspector_name=request.form.get("inspector_name", ""),
             before_photo=request.form.get("before_photo") or None,
             after_photo=request.form.get("after_photo") or None,
+            photos=json.dumps([p for p in request.form.getlist("photos[]") if p]) or None,
             photo_lat=float(lat) if lat else None,
             photo_lng=float(lng) if lng else None,
             chk_partition=bool(request.form.get("chk_partition")),
@@ -399,6 +413,9 @@ def record_edit(iid):
             insp.before_photo = request.form["before_photo"]
         if request.form.get("after_photo"):
             insp.after_photo  = request.form["after_photo"]
+        new_photos = [p for p in request.form.getlist("photos[]") if p]
+        if new_photos:
+            insp.photos = json.dumps(new_photos)
         insp.chk_partition = bool(request.form.get("chk_partition"))
         insp.chk_ceiling   = bool(request.form.get("chk_ceiling"))
         insp.chk_drain     = bool(request.form.get("chk_drain"))
@@ -427,7 +444,17 @@ def record_delete(iid):
 @app.route("/records/<int:iid>/photo/<which>")
 def record_photo(iid, which):
     insp = Inspection.query.get_or_404(iid)
-    data_url = insp.before_photo if which == "before" else insp.after_photo
+    if which == "before":
+        data_url = insp.before_photo
+    elif which == "after":
+        data_url = insp.after_photo
+    else:
+        try:
+            idx = int(which)
+            photos = json.loads(insp.photos) if insp.photos else []
+            data_url = photos[idx] if 0 <= idx < len(photos) else None
+        except (ValueError, IndexError):
+            data_url = None
     if not data_url:
         return "없음", 404
     header, encoded = data_url.split(",", 1)

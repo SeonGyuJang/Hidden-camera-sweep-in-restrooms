@@ -5,7 +5,12 @@ set -e
 mkdir -p "${DATA_DIR:-/data}/photos"
 
 echo "Running DB migrations..."
-flask db upgrade
+if flask db upgrade; then
+  echo "Migrations applied."
+else
+  echo "Migration failed or no versions — falling back to create_all..."
+  flask init-db
+fi
 
 echo "Seeding buildings..."
 flask init-db 2>/dev/null || true

@@ -7,4 +7,4 @@ __pycache__/
 instance/
 *.db
 .DS_Store
-migrations/versions/
+# migrations/versions/ — 버전 파일은 추적 필요

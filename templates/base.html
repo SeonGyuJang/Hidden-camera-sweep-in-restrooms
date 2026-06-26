@@ -18,9 +18,15 @@
 <header class="t-header">
   <div>
     {% block header_left %}
-    <div class="t-header-title">
-      <span class="ku-mark">비범</span> &rsaquo; 총학생회 불법촬영 점검 &rsaquo; 캠퍼스 내 불법촬영 점검
-    </div>
+    <a href="{{ url_for('home') }}" style="display:flex;align-items:center;text-decoration:none">
+      <img src="{{ url_for('static', filename='images/logo.png') }}"
+           alt="비범 불법촬영 점검"
+           style="height:28px;width:auto;object-fit:contain"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="t-header-title" style="display:none">
+        <span class="ku-mark">비범</span>불법촬영 점검
+      </div>
+    </a>
     {% endblock %}
   </div>
   <div class="t-header-actions">

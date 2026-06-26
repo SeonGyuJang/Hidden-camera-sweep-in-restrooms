@@ -37,10 +37,9 @@
       </span>
     </div>
     <div class="t-card-row">
-      <span style="font-size:14px;color:var(--t3)">사진</span>
-      <span style="font-size:13px">
-        {{ '전 ✓' if insp.before_photo else '전 ✗' }}
-        {{ ' · 후 ✓' if insp.after_photo else ' · 후 ✗' }}
+      <span style="font-size:14px;color:var(--t3)">활동 사진</span>
+      <span style="font-size:15px;font-weight:600;color:{{ 'var(--green)' if insp.photos_list else 'var(--t3)' }}">
+        {{ insp.photos_list|length }}장
       </span>
     </div>
     <div class="t-card-row">

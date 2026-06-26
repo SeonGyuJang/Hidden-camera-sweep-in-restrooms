@@ -8,7 +8,7 @@
     2026 · 07 · 16  불법촬영 전수조사
   </div>
   <div style="font-size:22px;font-weight:800;color:var(--t1);line-height:1.3">
-    고려대학교 세종캠퍼스<br>화장실 일제 점검
+    고려대학교 세종캠퍼스<br>내 화장실 전수조사
   </div>
   <div style="font-size:13px;color:var(--t3);margin-top:6px">
     디지털성폭력지원센터 · 세종북부경찰서 협력
@@ -33,7 +33,7 @@
 <div class="t-divider"></div>
 
 <!-- Operation Guide -->
-<div class="t-section-title">📋 운영 가이드라인</div>
+<div class="t-section-title">운영 가이드라인</div>
 <div class="t-section">
   <div class="guide-card">
     <div class="guide-step">
@@ -69,9 +69,9 @@
     <div class="guide-step">
       <div class="guide-step-num">4</div>
       <div>
-        <div class="guide-step-title">점검 전·후 사진 촬영</div>
+        <div class="guide-step-title">활동 사진 촬영</div>
         <div class="guide-step-desc">
-          점검 전 화장실 전체 사진과 점검 후 사진을 각각 1장 이상 촬영해 인증 자료로 남깁니다.
+          점검 활동 사진, 불법촬영 근절 스티커 부착 사진 등 활동을 기록하는 사진을 여러 장 남겨주세요.
         </div>
       </div>
     </div>
@@ -91,23 +91,21 @@
 <div class="t-divider"></div>
 
 <!-- Teams -->
-<div class="t-section-title">👥 팀별 담당 구역</div>
+<div class="t-section-title">팀별 담당 구역</div>
 
-{% set icons = {'A':'fa-person-walking','B':'fa-person-walking','C':'fa-car','D':'fa-car'} %}
 {% for tid, t in TEAMS.items() %}
 <div class="t-section" style="padding-bottom:0;margin-bottom:8px">
   <div class="team-card-full">
     <!-- Header -->
     <div class="team-card-header">
       <div class="team-icon-box" style="background:{{ t.bg }}">
-        <span style="font-size:22px">{{ '🚶' if t.move_type == '도보' else '🚗' }}</span>
+        <i class="fa-solid {{ 'fa-person-walking' if t.move_type == '도보' else 'fa-car' }}"
+           style="font-size:18px;color:{{ t.color }}"></i>
       </div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:17px;font-weight:800;color:{{ t.color }}">{{ t.name }}</span>
-          <span style="font-size:11px;font-weight:600;color:var(--t3)">{{ t.move_type }}</span>
         </div>
-        <div style="font-size:13px;color:var(--t3);margin-top:4px">{{ t.guide }}</div>
       </div>
       <!-- Progress circle -->
       <div style="text-align:right;flex-shrink:0">
@@ -169,13 +167,14 @@
 <!-- Recent activity -->
 {% if recent %}
 <div class="t-divider" style="margin-top:8px"></div>
-<div class="t-section-title">🕐 최근 점검 기록</div>
+<div class="t-section-title">최근 점검 기록</div>
 <div class="t-section">
   <div class="t-list">
     {% for i in recent %}
     <a href="{{ url_for('record_detail', iid=i.id) }}" class="t-list-item">
       <div class="t-list-icon" style="background:{{ TEAMS[i.team].bg }}">
-        <span style="font-size:16px">{{ '✅' if i.completed else '📋' }}</span>
+        <i class="fa-solid {{ 'fa-check' if i.completed else 'fa-clipboard-list' }}"
+           style="font-size:14px;color:{{ TEAMS[i.team].color }}"></i>
       </div>
       <div class="t-list-body">
         <div class="t-list-title">{{ i.restroom.building.name }} · {{ i.restroom.floor }} {{ i.restroom.gender }}</div>

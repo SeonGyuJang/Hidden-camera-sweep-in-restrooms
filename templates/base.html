@@ -2,80 +2,123 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}불법촬영 점검 시스템{% endblock %} | 고려대 세종캠퍼스</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#CC0033">
+  <title>{% block title %}불법촬영 점검{% endblock %}</title>
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-crimson sticky-top shadow-sm">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
-      <i class="fa-solid fa-camera-slash me-2"></i>불법촬영 점검
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('index') }}"><i class="fa-solid fa-map me-1"></i>지도</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('restrooms') }}"><i class="fa-solid fa-restroom me-1"></i>화장실 목록</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('inspections') }}"><i class="fa-solid fa-clipboard-check me-1"></i>점검 기록</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('inspection_new') }}"><i class="fa-solid fa-plus me-1"></i>점검 등록</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('summary') }}"><i class="fa-solid fa-chart-bar me-1"></i>현황 요약</a>
-        </li>
-      </ul>
-      <span class="navbar-text text-white-50 small">
-        고려대학교 세종캠퍼스 제38대 총학생회 '비범' 시설TF
-      </span>
+<!-- Top Header -->
+<header class="app-header">
+  <div class="header-left">
+    {% block header_left %}
+    <div class="header-title">
+      <span class="header-badge">비범</span>
+      불법촬영 점검
     </div>
+    {% endblock %}
   </div>
-</nav>
+  <div class="header-right">
+    {% block header_right %}
+    <button class="icon-btn" onclick="openDrawer()" aria-label="메뉴">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    {% endblock %}
+  </div>
+</header>
 
-<div class="container-fluid py-3">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in messages %}
-      <div class="alert alert-{{ 'success' if cat == 'success' else 'info' }} alert-dismissible fade show" role="alert">
-        {{ msg }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    {% endfor %}
-  {% endwith %}
+<!-- Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div class="flash-msg flash-{{ cat }}">
+    <i class="fa-solid fa-{{ 'check-circle' if cat == 'success' else 'info-circle' }} me-2"></i>
+    {{ msg }}
+  </div>
+  {% endfor %}
+{% endwith %}
 
+<!-- Main content -->
+<main class="app-main {% block main_class %}with-bottom-nav{% endblock %}">
   {% block content %}{% endblock %}
+</main>
+
+<!-- Bottom Navigation -->
+{% block bottom_nav %}
+<nav class="bottom-nav">
+  <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+    <i class="fa-solid fa-map"></i>
+    <span>홈</span>
+  </a>
+  <a href="{{ url_for('report') }}" class="nav-item nav-item-center {% if request.endpoint in ['report','report_done'] %}active{% endif %}">
+    <div class="nav-center-btn">
+      <i class="fa-solid fa-camera"></i>
+    </div>
+    <span>점검하기</span>
+  </a>
+  <a href="{{ url_for('records') }}" class="nav-item {% if request.endpoint in ['records','record_detail','record_edit'] %}active{% endif %}">
+    <i class="fa-solid fa-clipboard-list"></i>
+    <span>기록</span>
+  </a>
+</nav>
+{% endblock %}
+
+<!-- Side Drawer Overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- Side Drawer -->
+<div class="side-drawer" id="sideDrawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title">고려대 세종캠퍼스</div>
+      <div class="drawer-subtitle">제38대 총학생회 '비범' 시설TF</div>
+    </div>
+    <button class="icon-btn" onclick="closeDrawer()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="drawer-section-label">점검 현황</div>
+  <a href="{{ url_for('summary') }}" class="drawer-item" onclick="closeDrawer()">
+    <i class="fa-solid fa-chart-bar"></i> 전체 현황 요약
+  </a>
+  <a href="{{ url_for('records') }}" class="drawer-item" onclick="closeDrawer()">
+    <i class="fa-solid fa-clipboard-list"></i> 전체 점검 기록
+  </a>
+  <a href="{{ url_for('api_export') }}" class="drawer-item" target="_blank" onclick="closeDrawer()">
+    <i class="fa-solid fa-download"></i> 데이터 내보내기 (JSON)
+  </a>
+
+  <div class="drawer-section-label">관리</div>
+  <a href="{{ url_for('restrooms') }}" class="drawer-item" onclick="closeDrawer()">
+    <i class="fa-solid fa-restroom"></i> 화장실 목록 관리
+  </a>
+  <a href="{{ url_for('restroom_new') }}" class="drawer-item" onclick="closeDrawer()">
+    <i class="fa-solid fa-plus"></i> 화장실 추가
+  </a>
+
+  <div class="drawer-section-label">팀별 기록</div>
+  {% for tid, t in [('A', {'name':'도보A팀','color':'#3B82F6'}),('B',{'name':'도보B팀','color':'#10B981'}),('C',{'name':'차량C팀','color':'#F59E0B'}),('D',{'name':'차량D팀','color':'#8B5CF6'})] %}
+  <a href="{{ url_for('records') }}?team={{ tid }}" class="drawer-item" onclick="closeDrawer()">
+    <span class="team-dot" style="background:{{ t.color }}"></span> {{ t.name }} 기록
+  </a>
+  {% endfor %}
+
+  <div class="drawer-footer">
+    <div>디지털성폭력지원센터 · 세종북부경찰서 협력</div>
+    <div>2025. 07. 16</div>
+  </div>
 </div>
 
-<footer class="footer mt-auto py-3 bg-light border-top">
-  <div class="container text-center text-muted small">
-    <p class="mb-1">
-      고려대학교 세종캠퍼스 제38대 총학생회 <strong>'비범'</strong> 산하 시설TF팀
-      &nbsp;|&nbsp; 디지털성폭력지원센터 &nbsp;|&nbsp; 세종북부경찰서
-    </p>
-    <p class="mb-0">2025 불법촬영 전수조사 점검 시스템</p>
-  </div>
-</footer>
-
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

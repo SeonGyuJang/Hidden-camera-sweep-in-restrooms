@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}점검 기록{% endblock %}
+
+{% block header_left %}
+<div class="header-title">
+  <i class="fa-solid fa-clipboard-list" style="font-size:.9rem"></i> 점검 기록
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Team filter tabs -->
+<div style="background:#fff;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <a href="{{ url_for('records') }}"
+     class="filter-tab {% if not sel_team %}active{% endif %}">전체</a>
+  {% for tid, t in teams.items() %}
+  <a href="{{ url_for('records') }}?team={{ tid }}"
+     class="filter-tab {% if sel_team == tid %}active{% endif %}"
+     style="--tc:{{ t.color }}">{{ t.name }}</a>
+  {% endfor %}
+</div>
+
+<div class="record-list" style="padding-top:12px">
+  {% for i in items %}
+  <a href="{{ url_for('record_detail', iid=i.id) }}" class="record-item">
+    <div class="record-dot" style="background:{{ teams[i.team].color }}"></div>
+    <div class="record-info">
+      <div class="record-title">{{ i.restroom.building.name }} {{ i.restroom.floor }}</div>
+      <div class="record-sub">
+        {{ teams[i.team].name }}
+        {% if i.inspector_name %} · {{ i.inspector_name }}{% endif %}
+        · {{ i.created_at.strftime('%m/%d %H:%M') if i.created_at }}
+      </div>
+    </div>
+    <div class="record-badges">
+      <span class="badge badge-{{ i.restroom.gender }}">{{ i.restroom.gender }}</span>
+      {% if i.completed %}
+      <span class="badge badge-done"><i class="fa-solid fa-check"></i></span>
+      {% else %}
+      <span class="badge badge-pending">진행중</span>
+      {% endif %}
+      {% if i.action_taken %}
+      <span class="badge badge-action">⚠️</span>
+      {% endif %}
+    </div>
+  </a>
+  {% else %}
+  <div style="text-align:center;padding:48px 16px;color:var(--text-muted)">
+    <i class="fa-solid fa-clipboard" style="font-size:2.5rem;opacity:.3;display:block;margin-bottom:12px"></i>
+    아직 점검 기록이 없습니다
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+.filter-tab {
+  white-space: nowrap;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text-muted);
+  background: #F3F4F6;
+  border: 1.5px solid transparent;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.filter-tab.active {
+  background: color-mix(in srgb, var(--tc, #CC0033) 12%, white);
+  color: var(--tc, #CC0033);
+  border-color: var(--tc, #CC0033);
+}
+</style>
+{% endblock %}

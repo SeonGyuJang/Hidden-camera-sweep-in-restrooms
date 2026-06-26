@@ -1,89 +1,115 @@
 {% extends "base.html" %}
 {% block title %}현황 요약{% endblock %}
-{% block content %}
-<h5 class="mb-3"><i class="fa-solid fa-chart-bar me-1 text-crimson"></i>점검 현황 요약</h5>
 
-<!-- Group progress -->
-<div class="row g-3 mb-4">
-  {% for g in groups %}
-  <div class="col-md-3">
-    <div class="card shadow-sm h-100">
-      <div class="card-header badge-group-{{ g }} text-white fw-bold">{{ g }}조</div>
-      <div class="card-body">
-        <div class="stat-num" style="font-size:1.8rem">{{ stats[g].done }}</div>
-        <div class="text-muted small mb-2">완료 / {{ stats[g].total }} 건</div>
-        {% if stats[g].total > 0 %}
-        <div class="progress">
-          <div class="progress-bar badge-group-{{ g }}"
-               style="width:{{ (stats[g].done / stats[g].total * 100)|int }}%"></div>
-        </div>
-        <div class="text-end small mt-1 text-muted">
-          {{ (stats[g].done / stats[g].total * 100)|int }}%
-        </div>
-        {% else %}
-        <div class="text-muted small">기록 없음</div>
-        {% endif %}
+{% block header_left %}
+<a href="{{ url_for('index') }}" class="header-back">
+  <i class="fa-solid fa-arrow-left"></i> 현황 요약
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-page page-enter">
+
+  <!-- Team progress -->
+  {% for tid, t in teams.items() %}
+  {% set ts = team_stats[tid] %}
+  {% set pct = (ts.done_restrooms / ts.total_restrooms * 100)|int if ts.total_restrooms > 0 else 0 %}
+  <div class="team-stat-card" style="border-color:{{ t.color }}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div>
+        <div class="fw-700" style="color:{{ t.color }}">{{ t.name }}</div>
+        <div class="text-sm text-muted">{{ t.members|join(' · ') }}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:1.3rem;font-weight:800;color:{{ t.color }}">{{ ts.done_restrooms }}/{{ ts.total_restrooms }}</div>
+        <div class="text-sm text-muted">화장실</div>
+      </div>
+    </div>
+    <div class="progress-track mb-16">
+      <div class="progress-fill" style="width:{{ pct }}%;background:{{ t.color }}"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:#F9FAFB;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:1.1rem;font-weight:700">{{ ts.total_inspections }}</div>
+        <div class="text-sm text-muted">점검 기록</div>
+      </div>
+      <div style="background:{% if ts.actions > 0 %}#FEF3C7{% else %}#F0FDF4{% endif %};border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:1.1rem;font-weight:700;color:{% if ts.actions > 0 %}#B45309{% else %}#15803D{% endif %}">{{ ts.actions }}</div>
+        <div class="text-sm text-muted">조치 건수</div>
       </div>
     </div>
   </div>
   {% endfor %}
-</div>
 
-<!-- Building breakdown -->
-<div class="card shadow-sm mb-4">
-  <div class="card-header"><i class="fa-solid fa-building me-1"></i> 건물별 상세 현황</div>
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>건물</th>
-          <th class="text-center">화장실 수</th>
-          <th class="text-center">점검 기록</th>
-          <th class="text-center">조치 건수</th>
-          <th>진행률</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for b in buildings %}
-        <tr>
-          <td><strong>{{ b.name }}</strong></td>
-          <td class="text-center">{{ b.restrooms|length }}</td>
-          <td class="text-center">
-            {% set insp_count = b.restrooms|sum(attribute='inspections')|list|length %}
-            {% set total_insp = namespace(n=0) %}
-            {% for r in b.restrooms %}{% set total_insp.n = total_insp.n + r.inspections|length %}{% endfor %}
-            {{ total_insp.n }}
-          </td>
-          <td class="text-center">
-            {% set actions = namespace(n=0) %}
-            {% for r in b.restrooms %}
-              {% for i in r.inspections %}{% if i.action_taken %}{% set actions.n = actions.n + 1 %}{% endif %}{% endfor %}
-            {% endfor %}
-            {% if actions.n > 0 %}
-            <span class="badge bg-warning text-dark">{{ actions.n }}</span>
-            {% else %}-{% endif %}
-          </td>
-          <td>
-            {% set done = namespace(n=0) %}
-            {% for r in b.restrooms %}{% if r.inspections %}{% set done.n = done.n + 1 %}{% endif %}{% endfor %}
-            {% set pct = (done.n / b.restrooms|length * 100)|int if b.restrooms|length > 0 else 0 %}
-            <div class="d-flex align-items-center gap-2">
-              <div class="progress flex-grow-1">
-                <div class="progress-bar bg-crimson" style="width:{{ pct }}%"></div>
-              </div>
-              <span class="small text-muted" style="min-width:35px">{{ pct }}%</span>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- Building breakdown -->
+  <div class="form-section" style="margin-top:8px">
+    <div class="form-section-header"><i class="fa-solid fa-building"></i> 건물별 현황</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#F9FAFB;font-size:.75rem;color:var(--text-muted)">
+            <th style="padding:10px 12px;text-align:left;font-weight:600">건물</th>
+            <th style="padding:10px 8px;text-align:center;font-weight:600">팀</th>
+            <th style="padding:10px 8px;text-align:center;font-weight:600">화장실</th>
+            <th style="padding:10px 8px;text-align:center;font-weight:600">점검</th>
+            <th style="padding:10px 8px;text-align:center;font-weight:600">완료</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in buildings %}
+          {% set insp_n = namespace(n=0) %}
+          {% for r in b.restrooms %}{% set insp_n.n = insp_n.n + r.inspections|length %}{% endfor %}
+          {% set done_n = namespace(n=0) %}
+          {% for r in b.restrooms %}{% if r.inspections %}{% set done_n.n = done_n.n + 1 %}{% endif %}{% endfor %}
+          <tr style="border-bottom:1px solid #F3F4F6">
+            <td style="padding:11px 12px;font-size:.85rem;font-weight:600">{{ b.name }}</td>
+            <td style="padding:11px 8px;text-align:center">
+              <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:{{ teams[b.team].color }};color:#fff;font-size:.65rem;font-weight:800;line-height:22px;text-align:center">{{ b.team }}</span>
+            </td>
+            <td style="padding:11px 8px;text-align:center;font-size:.85rem">{{ b.restrooms|length }}</td>
+            <td style="padding:11px 8px;text-align:center;font-size:.85rem">{{ insp_n.n }}</td>
+            <td style="padding:11px 8px;text-align:center">
+              {% if done_n.n == b.restrooms|length and b.restrooms|length > 0 %}
+              <span style="color:#15803D;font-size:.8rem;font-weight:700">✓</span>
+              {% elif done_n.n > 0 %}
+              <span style="color:#D97706;font-size:.75rem">{{ done_n.n }}/{{ b.restrooms|length }}</span>
+              {% else %}
+              <span style="color:#D1D5DB;font-size:.8rem">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
 
-<div class="d-flex gap-2">
-  <a href="{{ url_for('api_summary_json') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
-    <i class="fa-solid fa-download me-1"></i>JSON 내보내기
+  <!-- Recent -->
+  {% if recent %}
+  <div class="form-section">
+    <div class="form-section-header"><i class="fa-solid fa-clock"></i> 최근 점검 기록</div>
+    <div>
+      {% for i in recent %}
+      <a href="{{ url_for('record_detail', iid=i.id) }}"
+         style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #F3F4F6;text-decoration:none;color:var(--text)">
+        <div style="width:8px;height:8px;border-radius:50%;background:{{ teams[i.team].color }};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {{ i.restroom.building.name }} {{ i.restroom.floor }} {{ i.restroom.gender }}
+          </div>
+          <div style="font-size:.72rem;color:var(--text-muted)">
+            {{ teams[i.team].name }} · {{ i.created_at.strftime('%m/%d %H:%M') if i.created_at }}
+          </div>
+        </div>
+        {% if i.action_taken %}<span class="badge badge-action">⚠️</span>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <a href="{{ url_for('api_export') }}" class="btn btn-secondary btn-full" target="_blank">
+    <i class="fa-solid fa-download"></i> 전체 데이터 JSON 내보내기
   </a>
 </div>
 {% endblock %}

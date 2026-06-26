@@ -1,56 +1,65 @@
 {% extends "base.html" %}
 {% block title %}화장실 추가{% endblock %}
+
+{% block header_left %}
+<a href="{{ url_for('restrooms') }}" class="header-back">
+  <i class="fa-solid fa-arrow-left"></i> 화장실 추가
+</a>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-7">
-    <div class="card shadow-sm">
-      <div class="card-header bg-crimson text-white">
-        <i class="fa-solid fa-restroom me-2"></i>화장실 추가
-      </div>
-      <div class="card-body">
-        <form method="post">
-          <div class="mb-3">
-            <label class="form-label fw-bold">건물 <span class="text-danger">*</span></label>
-            <select name="building_id" class="form-select" required>
-              <option value="">건물 선택</option>
-              {% for b in buildings %}
-              <option value="{{ b.id }}">{{ b.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-bold">층 <span class="text-danger">*</span></label>
-            <input type="text" name="floor" class="form-control" placeholder="예: 1F, 2F, B1" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-bold">성별 <span class="text-danger">*</span></label>
-            <div class="d-flex gap-3">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="gender" value="남" id="g_m" required>
-                <label class="form-check-label" for="g_m">남자</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="gender" value="여" id="g_f">
-                <label class="form-check-label" for="g_f">여자</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="gender" value="공용" id="g_u">
-                <label class="form-check-label" for="g_u">공용</label>
-              </div>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label fw-bold">위치 메모</label>
-            <input type="text" name="location_detail" class="form-control"
-                   placeholder="예: 중앙 복도 끝, 엘리베이터 옆 등">
-          </div>
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-crimson px-4">저장</button>
-            <a href="{{ url_for('restrooms') }}" class="btn btn-outline-secondary">취소</a>
-          </div>
-        </form>
+<div class="form-page page-enter">
+  <form method="post">
+    <div class="form-section">
+      <div class="form-section-header"><i class="fa-solid fa-building"></i> 건물 선택</div>
+      <div class="form-section-body">
+        <select name="building_id" class="form-select" required>
+          <option value="">건물 선택</option>
+          {% for b in buildings %}
+          <option value="{{ b.id }}" {% if prefill_building == b.id %}selected{% endif %}>
+            [{{ b.team }}팀] {{ b.name }}
+          </option>
+          {% endfor %}
+        </select>
       </div>
     </div>
-  </div>
+
+    <div class="form-section">
+      <div class="form-section-header"><i class="fa-solid fa-restroom"></i> 화장실 정보</div>
+      <div class="form-section-body">
+        <label class="form-label">층</label>
+        <input type="text" name="floor" class="form-control" placeholder="예: 1F, 2F, B1" required>
+
+        <label class="form-label mt-12">성별</label>
+        <div class="gender-selector">
+          <label class="gender-btn" id="gbtn-남" onclick="selectGender('남')">
+            <input type="radio" name="gender" value="남" style="display:none" required>남자
+          </label>
+          <label class="gender-btn" id="gbtn-여" onclick="selectGender('여')">
+            <input type="radio" name="gender" value="여" style="display:none">여자
+          </label>
+          <label class="gender-btn" id="gbtn-공용" onclick="selectGender('공용')">
+            <input type="radio" name="gender" value="공용" style="display:none">공용
+          </label>
+        </div>
+
+        <label class="form-label mt-12">위치 메모 <span class="text-muted">(선택)</span></label>
+        <input type="text" name="location_detail" class="form-control"
+               placeholder="예: 엘리베이터 옆, 중앙 복도 끝">
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full mb-16">등록하기</button>
+    <a href="{{ url_for('restrooms') }}" class="btn btn-secondary btn-full">취소</a>
+  </form>
 </div>
+
+<script>
+function selectGender(g) {
+  ['남','여','공용'].forEach(v => {
+    document.getElementById('gbtn-'+v).className = 'gender-btn' + (v===g ? ' selected-'+v : '');
+    document.querySelector(`input[name="gender"][value="${v}"]`).checked = (v === g);
+  });
+}
+</script>
 {% endblock %}

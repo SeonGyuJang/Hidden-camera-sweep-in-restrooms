@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}저장 완료{% endblock %}
+
+{% block header_left %}
+<div class="header-title">점검 완료</div>
+{% endblock %}
+
+{% block content %}
+<div class="form-page page-enter">
+  <div class="done-hero">
+    <div class="done-icon">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:8px">점검 기록 저장 완료</h2>
+    <p class="text-muted text-sm">{{ insp.restroom.label }} 점검 기록이 저장되었습니다.</p>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-body">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-muted text-sm">건물</span>
+          <span class="fw-600">{{ insp.restroom.building.name }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-muted text-sm">위치</span>
+          <span class="fw-600">{{ insp.restroom.floor }} {{ insp.restroom.gender }}화장실</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-muted text-sm">팀</span>
+          <span class="badge badge-{{ insp.team|lower }}">{{ teams[insp.team].name }}</span>
+        </div>
+        {% if insp.inspector_name %}
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-muted text-sm">점검자</span>
+          <span class="fw-600">{{ insp.inspector_name }}</span>
+        </div>
+        {% endif %}
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-muted text-sm">조치 여부</span>
+          {% if insp.action_taken %}
+          <span class="badge badge-action">⚠️ 조치 있음</span>
+          {% else %}
+          <span class="badge badge-done">이상 없음</span>
+          {% endif %}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-muted text-sm">사진</span>
+          <span class="text-sm">
+            {% if insp.before_photo %}점검 전 ✓{% endif %}
+            {% if insp.after_photo %} / 점검 후 ✓{% endif %}
+            {% if not insp.before_photo and not insp.after_photo %}없음{% endif %}
+          </span>
+        </div>
+        {% if insp.photo_lat %}
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-muted text-sm">GPS</span>
+          <span class="gps-chip" style="font-size:.7rem;padding:4px 9px">
+            <i class="fa-solid fa-location-dot"></i>
+            {{ "%.5f"|format(insp.photo_lat) }}, {{ "%.5f"|format(insp.photo_lng) }}
+          </span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <a href="{{ url_for('report') }}" class="btn btn-primary btn-full mb-16">
+    <i class="fa-solid fa-plus"></i> 다음 화장실 점검하기
+  </a>
+  <a href="{{ url_for('record_detail', iid=insp.id) }}" class="btn btn-secondary btn-full mb-16">
+    <i class="fa-solid fa-eye"></i> 기록 상세 보기
+  </a>
+  <a href="{{ url_for('index') }}" class="btn btn-secondary btn-full">
+    <i class="fa-solid fa-home"></i> 홈으로
+  </a>
+</div>
+{% endblock %}

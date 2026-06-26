@@ -39,7 +39,7 @@
   --r-xl: 20px;
 
   /* Layout */
-  --header-h: 64px;
+  --header-h: 80px;
   --nav-h:    64px;
   --safe-b:   env(safe-area-inset-bottom, 0px);
 }

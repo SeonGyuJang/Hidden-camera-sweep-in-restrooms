@@ -1,159 +1,155 @@
 {% extends "base.html" %}
 {% block title %}점검 상세{% endblock %}
-
 {% block header_left %}
-<a href="{{ url_for('records') }}" class="header-back">
-  <i class="fa-solid fa-arrow-left"></i> 기록 상세
-</a>
+<button class="t-back" onclick="history.back()">
+  <i class="fa-solid fa-chevron-left" style="font-size:15px"></i> 상세
+</button>
 {% endblock %}
-
-{% block header_right %}
-<a href="{{ url_for('record_edit', iid=insp.id) }}" class="icon-btn">
+{% block header_actions %}
+<a href="{{ url_for('record_edit', iid=insp.id) }}" class="t-header-btn">
   <i class="fa-solid fa-pen"></i>
 </a>
-<button class="icon-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
+<button class="t-header-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
 {% endblock %}
 
 {% block content %}
-<div class="form-page page-enter">
+{% set t = TEAMS[insp.team] %}
 
-  <!-- Info -->
-  <div class="form-section">
-    <div class="form-section-header" style="background:{{ teams[insp.team].color }}20;color:{{ teams[insp.team].color }}">
-      <i class="fa-solid fa-location-dot"></i> 위치 정보
-    </div>
-    <div class="form-section-body">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">건물</span>
-          <span class="fw-700">{{ insp.restroom.building.name }}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">층 / 성별</span>
-          <div style="display:flex;gap:6px;align-items:center">
-            <span class="fw-600">{{ insp.restroom.floor }}</span>
-            <span class="badge badge-{{ insp.restroom.gender }}">{{ insp.restroom.gender }}</span>
-          </div>
-        </div>
-        {% if insp.restroom.location_detail %}
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">위치 메모</span>
-          <span class="text-sm">{{ insp.restroom.location_detail }}</span>
-        </div>
-        {% endif %}
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">담당팀</span>
-          <span class="badge badge-{{ insp.team|lower }}"
-                style="background:{{ teams[insp.team].color }}20;color:{{ teams[insp.team].color }}">
-            {{ teams[insp.team].name }}
-          </span>
-        </div>
-        {% if insp.inspector_name %}
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">점검자</span>
-          <span class="fw-600">{{ insp.inspector_name }}</span>
-        </div>
-        {% endif %}
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">등록 일시</span>
-          <span class="text-sm">{{ insp.created_at.strftime('%Y.%m.%d %H:%M') if insp.created_at }}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">점검 상태</span>
-          {% if insp.completed %}
-          <span class="badge badge-done"><i class="fa-solid fa-check"></i> 완료</span>
-          {% else %}
-          <span class="badge badge-pending">진행중</span>
-          {% endif %}
-        </div>
-        {% if insp.photo_lat %}
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="text-muted text-sm">GPS</span>
-          <span class="gps-chip" style="font-size:.7rem;padding:4px 9px">
-            <i class="fa-solid fa-location-dot"></i>
-            {{ "%.5f"|format(insp.photo_lat) }}, {{ "%.5f"|format(insp.photo_lng) }}
-          </span>
-        </div>
-        {% endif %}
+<!-- Top context -->
+<div style="background:{{ t.color }};padding:16px 20px;display:flex;align-items:center;gap:12px">
+  <div style="flex:1">
+    <div style="font-size:12px;color:rgba(255,255,255,.8)">{{ insp.restroom.building.name }}</div>
+    <div style="font-size:18px;font-weight:800;color:#fff">{{ insp.restroom.floor }} {{ insp.restroom.gender }}화장실</div>
+  </div>
+  {% if insp.completed %}
+  <span style="background:rgba(255,255,255,.25);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700">✓ 완료</span>
+  {% endif %}
+</div>
+
+<div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+
+  <!-- Info card -->
+  <div class="t-list">
+    <div class="t-list-item" style="cursor:default">
+      <div class="t-list-icon" style="background:{{ t.bg }}">🏷️</div>
+      <div class="t-list-body">
+        <div class="t-list-title">{{ t.name }}</div>
+        <div class="t-list-sub">담당 팀</div>
       </div>
     </div>
+    {% if insp.inspector_name %}
+    <div class="t-list-item" style="cursor:default">
+      <div class="t-list-icon" style="background:var(--bg)">👤</div>
+      <div class="t-list-body">
+        <div class="t-list-title">{{ insp.inspector_name }}</div>
+        <div class="t-list-sub">점검자</div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="t-list-item" style="cursor:default">
+      <div class="t-list-icon" style="background:var(--bg)">🕐</div>
+      <div class="t-list-body">
+        <div class="t-list-title">{{ insp.created_at.strftime('%Y.%m.%d %H:%M') if insp.created_at }}</div>
+        <div class="t-list-sub">등록 일시</div>
+      </div>
+    </div>
+    {% if insp.photo_lat %}
+    <div class="t-list-item" style="cursor:default">
+      <div class="t-list-icon" style="background:var(--green-bg)">📍</div>
+      <div class="t-list-body">
+        <div class="t-list-title" style="font-size:13px">{{ "%.5f"|format(insp.photo_lat) }}, {{ "%.5f"|format(insp.photo_lng) }}</div>
+        <div class="t-list-sub">GPS 좌표</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Checklist -->
+  <div style="background:var(--surface);border-radius:var(--r-xl);overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+      <span style="font-size:14px;font-weight:700">체크리스트</span>
+      <span style="font-size:14px;font-weight:700;color:{{ 'var(--green)' if insp.checklist_score == 6 else 'var(--t3)' }}">
+        {{ insp.checklist_score }}/{{ CHECKLIST|length }}
+      </span>
+    </div>
+    {% for key, name, desc in CHECKLIST %}
+    {% set checked = insp['chk_' + key] %}
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)">
+      <div style="width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+                  background:{{ 'var(--green)' if checked else 'var(--border-2)' }};color:#fff;font-size:11px;flex-shrink:0">
+        {% if checked %}<i class="fa-solid fa-check"></i>{% endif %}
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:500;color:{{ 'var(--t1)' if checked else 'var(--t4)' }}">{{ name }}</div>
+        <div style="font-size:11px;color:var(--t4)">{{ desc }}</div>
+      </div>
+    </div>
+    {% endfor %}
   </div>
 
   <!-- Photos -->
-  <div class="form-section">
-    <div class="form-section-header"><i class="fa-solid fa-images"></i> 촬영 사진</div>
-    <div class="form-section-body">
-      <div class="photo-grid">
-        <div>
-          <div class="form-label">점검 전</div>
-          {% if insp.before_photo %}
-          <div style="position:relative;border-radius:10px;overflow:hidden">
-            <img src="{{ insp.before_photo }}" style="width:100%;aspect-ratio:4/3;object-fit:cover">
-          </div>
-          <a href="{{ url_for('record_photo', iid=insp.id, which='before') }}"
-             class="btn btn-secondary btn-full btn-sm mt-8" download>
-            <i class="fa-solid fa-download"></i> 저장
-          </a>
-          {% else %}
-          <div style="aspect-ratio:4/3;background:#F3F4F6;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px">
-            <i class="fa-solid fa-image" style="font-size:1.5rem;color:#D1D5DB"></i>
-            <span class="text-sm text-muted">없음</span>
-          </div>
-          {% endif %}
+  <div style="background:var(--surface);border-radius:var(--r-xl);overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <span style="font-size:14px;font-weight:700">촬영 사진</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px">
+      {% for which, label, photo in [('before','점검 전',insp.before_photo),('after','점검 후',insp.after_photo)] %}
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase">{{ label }}</div>
+        {% if photo %}
+        <div style="position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:4/3">
+          <img src="{{ photo }}" style="width:100%;height:100%;object-fit:cover">
         </div>
-        <div>
-          <div class="form-label">점검 후</div>
-          {% if insp.after_photo %}
-          <div style="position:relative;border-radius:10px;overflow:hidden">
-            <img src="{{ insp.after_photo }}" style="width:100%;aspect-ratio:4/3;object-fit:cover">
-          </div>
-          <a href="{{ url_for('record_photo', iid=insp.id, which='after') }}"
-             class="btn btn-secondary btn-full btn-sm mt-8" download>
-            <i class="fa-solid fa-download"></i> 저장
-          </a>
-          {% else %}
-          <div style="aspect-ratio:4/3;background:#F3F4F6;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px">
-            <i class="fa-solid fa-image" style="font-size:1.5rem;color:#D1D5DB"></i>
-            <span class="text-sm text-muted">없음</span>
-          </div>
-          {% endif %}
+        <a href="{{ url_for('record_photo', iid=insp.id, which=which) }}"
+           class="t-btn t-btn-gray t-btn-sm t-btn-full" style="margin-top:6px" download>
+          <i class="fa-solid fa-download"></i> 저장
+        </a>
+        {% else %}
+        <div style="aspect-ratio:4/3;background:var(--bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px">
+          <span style="font-size:1.5rem;opacity:.3">📷</span>
+          <span style="font-size:11px;color:var(--t4)">없음</span>
         </div>
+        {% endif %}
       </div>
+      {% endfor %}
     </div>
   </div>
 
-  <!-- Notes -->
+  <!-- Action / Notes -->
   {% if insp.action_taken or insp.notes %}
-  <div class="form-section">
-    <div class="form-section-header"><i class="fa-solid fa-clipboard-list"></i> 조치 및 특이사항</div>
-    <div class="form-section-body" style="display:flex;flex-direction:column;gap:12px">
+  <div style="background:var(--surface);border-radius:var(--r-xl);overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <span style="font-size:14px;font-weight:700">조치 및 특이사항</span>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
       {% if insp.action_taken %}
       <div>
-        <div class="badge badge-action" style="margin-bottom:8px">⚠️ 조치 있음</div>
+        <span class="badge badge-action">⚠️ 조치 있음</span>
         {% if insp.action_detail %}
-        <p class="text-sm" style="line-height:1.6">{{ insp.action_detail }}</p>
+        <p style="font-size:14px;color:var(--t2);margin-top:8px;line-height:1.6">{{ insp.action_detail }}</p>
         {% endif %}
       </div>
       {% endif %}
       {% if insp.notes %}
       <div>
-        <div class="form-label">특이사항</div>
-        <p class="text-sm" style="line-height:1.6;white-space:pre-wrap">{{ insp.notes }}</p>
+        <div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">특이사항</div>
+        <p style="font-size:14px;color:var(--t2);line-height:1.6;white-space:pre-wrap">{{ insp.notes }}</p>
       </div>
       {% endif %}
     </div>
   </div>
   {% endif %}
 
-  <!-- Actions -->
-  <div style="display:flex;gap:10px;margin-bottom:8px">
-    <a href="{{ url_for('record_edit', iid=insp.id) }}" class="btn btn-secondary" style="flex:1">
+  <!-- Buttons -->
+  <div style="display:flex;gap:10px">
+    <a href="{{ url_for('record_edit', iid=insp.id) }}" class="t-btn t-btn-gray" style="flex:1">
       <i class="fa-solid fa-pen"></i> 수정
     </a>
     <form method="post" action="{{ url_for('record_delete', iid=insp.id) }}" style="flex:1"
-          onsubmit="return confirm('정말 삭제하시겠습니까?')">
-      <button class="btn btn-danger btn-full"><i class="fa-solid fa-trash"></i> 삭제</button>
+          onsubmit="return confirm('삭제하시겠습니까?')">
+      <button class="t-btn t-btn-red t-btn-full"><i class="fa-solid fa-trash"></i> 삭제</button>
     </form>
   </div>
+
 </div>
 {% endblock %}

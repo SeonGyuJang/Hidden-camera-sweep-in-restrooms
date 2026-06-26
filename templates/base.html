@@ -5,120 +5,203 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#CC0033">
-  <title>{% block title %}불법촬영 점검{% endblock %}</title>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>{% block title %}점검{% endblock %} · KU 불법촬영 점검</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/toss.css') }}">
   {% block head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body>
 
-<!-- Top Header -->
-<header class="app-header">
-  <div class="header-left">
+<!-- Header -->
+<header class="t-header">
+  <div>
     {% block header_left %}
-    <div class="header-title">
-      <span class="header-badge">비범</span>
-      불법촬영 점검
+    <div class="t-header-title">
+      <span class="ku-mark">비범</span>불법촬영 점검
     </div>
     {% endblock %}
   </div>
-  <div class="header-right">
-    {% block header_right %}
-    <button class="icon-btn" onclick="openDrawer()" aria-label="메뉴">
+  <div class="t-header-actions">
+    {% block header_actions %}
+    <button class="t-header-btn" onclick="openDrawer()">
       <i class="fa-solid fa-bars"></i>
     </button>
     {% endblock %}
   </div>
 </header>
 
-<!-- Flash messages -->
+<!-- Flash -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for cat, msg in messages %}
-  <div class="flash-msg flash-{{ cat }}">
-    <i class="fa-solid fa-{{ 'check-circle' if cat == 'success' else 'info-circle' }} me-2"></i>
-    {{ msg }}
-  </div>
+  <div class="t-flash t-flash-{{ cat }}">{{ msg }}</div>
   {% endfor %}
 {% endwith %}
 
-<!-- Main content -->
-<main class="app-main {% block main_class %}with-bottom-nav{% endblock %}">
+<!-- Main -->
+<main class="t-main {% block main_extra %}{% endblock %}">
   {% block content %}{% endblock %}
 </main>
 
-<!-- Bottom Navigation -->
+<!-- Bottom Nav -->
 {% block bottom_nav %}
-<nav class="bottom-nav">
-  <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
-    <i class="fa-solid fa-map"></i>
+<nav class="t-nav">
+  <a href="{{ url_for('home') }}"
+     class="t-nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+    <i class="fa-solid fa-house"></i>
     <span>홈</span>
   </a>
-  <a href="{{ url_for('report') }}" class="nav-item nav-item-center {% if request.endpoint in ['report','report_done'] %}active{% endif %}">
-    <div class="nav-center-btn">
-      <i class="fa-solid fa-camera"></i>
-    </div>
-    <span>점검하기</span>
-  </a>
-  <a href="{{ url_for('records') }}" class="nav-item {% if request.endpoint in ['records','record_detail','record_edit'] %}active{% endif %}">
+  <a href="{{ url_for('records') }}"
+     class="t-nav-item {% if request.endpoint in ['records'] %}active{% endif %}">
     <i class="fa-solid fa-clipboard-list"></i>
     <span>기록</span>
+  </a>
+  <a href="#" class="t-nav-center {% if request.endpoint in ['inspect','inspect_done'] %}active{% endif %}"
+     id="inspectNavBtn">
+    <div class="t-nav-fab"><i class="fa-solid fa-camera"></i></div>
+    <span>점검</span>
+  </a>
+  <a href="{{ url_for('summary') }}"
+     class="t-nav-item {% if request.endpoint == 'summary' %}active{% endif %}">
+    <i class="fa-solid fa-chart-bar"></i>
+    <span>현황</span>
+  </a>
+  <a href="{{ url_for('restrooms') }}"
+     class="t-nav-item {% if request.endpoint in ['restrooms','restroom_new'] %}active{% endif %}">
+    <i class="fa-solid fa-restroom"></i>
+    <span>관리</span>
   </a>
 </nav>
 {% endblock %}
 
-<!-- Side Drawer Overlay -->
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<!-- Drawer overlay -->
+<div class="t-overlay" id="overlay" onclick="closeDrawer()"></div>
 
-<!-- Side Drawer -->
-<div class="side-drawer" id="sideDrawer">
-  <div class="drawer-header">
-    <div>
-      <div class="drawer-title">고려대 세종캠퍼스</div>
-      <div class="drawer-subtitle">제38대 총학생회 '비범' 시설TF</div>
-    </div>
-    <button class="icon-btn" onclick="closeDrawer()">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
+<!-- Drawer -->
+<div class="t-drawer" id="drawer">
+  <div class="t-drawer-head">
+    <div class="t-drawer-event">2025 · 07 · 16</div>
+    <div class="t-drawer-title">고려대학교 세종캠퍼스</div>
+    <div class="t-drawer-sub">제38대 총학생회 '비범' 시설TF</div>
   </div>
 
-  <div class="drawer-section-label">점검 현황</div>
-  <a href="{{ url_for('summary') }}" class="drawer-item" onclick="closeDrawer()">
-    <i class="fa-solid fa-chart-bar"></i> 전체 현황 요약
-  </a>
-  <a href="{{ url_for('records') }}" class="drawer-item" onclick="closeDrawer()">
-    <i class="fa-solid fa-clipboard-list"></i> 전체 점검 기록
-  </a>
-  <a href="{{ url_for('api_export') }}" class="drawer-item" target="_blank" onclick="closeDrawer()">
-    <i class="fa-solid fa-download"></i> 데이터 내보내기 (JSON)
-  </a>
+  <div class="t-drawer-group">
+    <div class="t-drawer-label">현황</div>
+    <a href="{{ url_for('summary') }}" class="t-drawer-link" onclick="closeDrawer()">
+      <div class="icon" style="background:#EFF6FF;color:#3B82F6"><i class="fa-solid fa-chart-pie"></i></div>
+      전체 현황 요약
+    </a>
+    <a href="{{ url_for('records') }}" class="t-drawer-link" onclick="closeDrawer()">
+      <div class="icon" style="background:#F0FDF4;color:#10B981"><i class="fa-solid fa-list-check"></i></div>
+      전체 점검 기록
+    </a>
+    <a href="{{ url_for('api_export') }}" class="t-drawer-link" target="_blank" onclick="closeDrawer()">
+      <div class="icon" style="background:#F5F3FF;color:#8B5CF6"><i class="fa-solid fa-file-export"></i></div>
+      데이터 내보내기
+    </a>
+  </div>
 
-  <div class="drawer-section-label">관리</div>
-  <a href="{{ url_for('restrooms') }}" class="drawer-item" onclick="closeDrawer()">
-    <i class="fa-solid fa-restroom"></i> 화장실 목록 관리
-  </a>
-  <a href="{{ url_for('restroom_new') }}" class="drawer-item" onclick="closeDrawer()">
-    <i class="fa-solid fa-plus"></i> 화장실 추가
-  </a>
+  <div class="t-drawer-group">
+    <div class="t-drawer-label">팀별 기록</div>
+    {% for tid, t in TEAMS.items() %}
+    <a href="{{ url_for('team_page', tid=tid) }}" class="t-drawer-link" onclick="closeDrawer()">
+      <div class="icon" style="background:{{ t.bg }};color:{{ t.color }}">
+        <i class="fa-solid fa-{{ 'person-walking' if t.move_type == '도보' else 'car' }}"></i>
+      </div>
+      {{ t.name }}
+      <span style="margin-left:auto;font-size:12px;color:var(--t4)">{{ t.buildings|length }}개 건물</span>
+    </a>
+    {% endfor %}
+  </div>
 
-  <div class="drawer-section-label">팀별 기록</div>
-  {% for tid, t in [('A', {'name':'도보A팀','color':'#3B82F6'}),('B',{'name':'도보B팀','color':'#10B981'}),('C',{'name':'차량C팀','color':'#F59E0B'}),('D',{'name':'차량D팀','color':'#8B5CF6'})] %}
-  <a href="{{ url_for('records') }}?team={{ tid }}" class="drawer-item" onclick="closeDrawer()">
-    <span class="team-dot" style="background:{{ t.color }}"></span> {{ t.name }} 기록
-  </a>
-  {% endfor %}
+  <div class="t-drawer-group">
+    <div class="t-drawer-label">관리</div>
+    <a href="{{ url_for('restrooms') }}" class="t-drawer-link" onclick="closeDrawer()">
+      <div class="icon" style="background:#FFF1F1;color:#CC0033"><i class="fa-solid fa-restroom"></i></div>
+      화장실 목록 관리
+    </a>
+    <a href="{{ url_for('restrooms') }}" class="t-drawer-link" onclick="closeDrawer()">
+      <div class="icon" style="background:var(--bg);color:var(--t3)"><i class="fa-solid fa-plus"></i></div>
+      화장실 추가
+    </a>
+  </div>
 
-  <div class="drawer-footer">
-    <div>디지털성폭력지원센터 · 세종북부경찰서 협력</div>
-    <div>2025. 07. 16</div>
+  <div class="t-drawer-foot">
+    디지털성폭력지원센터 · 세종북부경찰서 협력<br>
+    고려대학교 세종캠퍼스 불법촬영 전수조사
   </div>
 </div>
 
+<!-- Camera modal (shared) -->
+<div class="cam-modal hidden" id="camModal">
+  <div class="cam-view">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="cam-tag" id="camTag"></div>
+  </div>
+  <div class="cam-bar">
+    <button class="cam-close" onclick="camClose()"><i class="fa-solid fa-xmark"></i></button>
+    <button class="cam-shutter" onclick="camSnap()"></button>
+    <button class="cam-flip" onclick="camFlip()"><i class="fa-solid fa-rotate"></i></button>
+  </div>
+  <canvas id="camCanvas" style="display:none"></canvas>
+</div>
+
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+// ── Global camera engine ───────────────────────────────────────────────────
+let _camTarget = null, _camStream = null, _camFacing = 'environment';
+
+function camOpen(target, label) {
+  _camTarget = target;
+  document.getElementById('camTag').textContent = label || '촬영';
+  document.getElementById('camModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  _camStart();
+}
+function _camStart() {
+  _camStop();
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: _camFacing, width:{ideal:1920}, height:{ideal:1080} }
+  }).then(s => {
+    _camStream = s;
+    document.getElementById('camVideo').srcObject = s;
+  }).catch(() => {
+    alert('카메라를 사용할 수 없습니다. 갤러리 업로드를 이용해 주세요.');
+    camClose();
+  });
+}
+function _camStop() {
+  if (_camStream) { _camStream.getTracks().forEach(t=>t.stop()); _camStream=null; }
+  document.getElementById('camVideo').srcObject = null;
+}
+function camFlip() {
+  _camFacing = _camFacing === 'environment' ? 'user' : 'environment';
+  _camStart();
+}
+function camSnap() {
+  const v = document.getElementById('camVideo');
+  const c = document.getElementById('camCanvas');
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  const data = c.toDataURL('image/jpeg', .88);
+  if (window._camCallback) window._camCallback(_camTarget, data);
+  camClose();
+}
+function camClose() {
+  _camStop();
+  document.getElementById('camModal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// ── Inspect nav button → route to last building or team select ─────────────
+document.getElementById('inspectNavBtn').addEventListener('click', e => {
+  e.preventDefault();
+  const tid = loadTeam();
+  if (tid) window.location.href = '/team/' + tid;
+  else window.location.href = '/';
+});
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

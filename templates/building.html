@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}{{ b.name }}{% endblock %}
+
+{% block header_left %}
+<button class="t-back" onclick="history.back()">
+  <i class="fa-solid fa-chevron-left" style="font-size:15px"></i>
+  {{ b.name }}
+</button>
+{% endblock %}
+{% block header_actions %}
+<a href="{{ url_for('restroom_add', bid=b.id) }}" class="t-header-btn">
+  <i class="fa-solid fa-plus"></i>
+</a>
+<button class="t-header-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
+{% endblock %}
+
+{% block content %}
+{% set t = TEAMS[b.team] %}
+
+<!-- Building header -->
+<div style="background:var(--surface);padding:20px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <span class="badge" style="background:{{ t.bg }};color:{{ t.color }}">{{ t.name }}</span>
+    {% set done = b.restrooms|selectattr('inspections')|list|length %}
+    {% set total = b.restrooms|length %}
+    {% if total > 0 and done == total %}
+    <span class="badge badge-done">✓ 모두 완료</span>
+    {% endif %}
+  </div>
+  <!-- Stats -->
+  <div class="t-stats">
+    <div class="t-stat">
+      <div class="t-stat-num">{{ total }}</div>
+      <div class="t-stat-label">전체 화장실</div>
+    </div>
+    <div class="t-stat">
+      <div class="t-stat-num green">{{ done }}</div>
+      <div class="t-stat-label">점검 완료</div>
+    </div>
+    <div class="t-stat">
+      <div class="t-stat-num yellow">{{ total - done }}</div>
+      <div class="t-stat-label">미점검</div>
+    </div>
+  </div>
+</div>
+
+<div class="t-divider"></div>
+
+<!-- Restroom list -->
+<div class="t-section-title">🚻 화장실 목록</div>
+<div class="t-section">
+  {% if b.restrooms %}
+  <div class="t-list">
+    {% for r in b.restrooms|sort(attribute='floor') %}
+    <div class="t-list-item" style="align-items:flex-start;gap:12px">
+      <!-- Status indicator -->
+      <div style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                  background:{{ 'var(--green-bg)' if r.status == 'done' else ('var(--yellow-bg)' if r.status == 'in_progress' else 'var(--bg)') }}">
+        <span style="font-size:18px">
+          {{ '✅' if r.status == 'done' else ('⏳' if r.status == 'in_progress' else '⬜') }}
+        </span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:16px;font-weight:700;color:var(--t1)">{{ r.floor }}</span>
+          <span class="badge badge-{{ r.gender }}">{{ r.gender }}</span>
+          {% if r.status == 'done' %}
+          <span class="badge badge-done">완료</span>
+          {% elif r.status == 'in_progress' %}
+          <span class="badge badge-progress">진행중</span>
+          {% endif %}
+        </div>
+        {% if r.location_detail %}
+        <div style="font-size:12px;color:var(--t3);margin-top:3px">{{ r.location_detail }}</div>
+        {% endif %}
+        {% if r.inspections %}
+        <div style="font-size:12px;color:var(--t3);margin-top:3px">
+          기록 {{ r.inspections|length }}건 ·
+          {{ r.inspections[-1].created_at.strftime('%H:%M') if r.inspections[-1].created_at }}
+        </div>
+        {% endif %}
+        <!-- Action buttons -->
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <a href="{{ url_for('inspect', rid=r.id) }}"
+             class="t-btn t-btn-primary t-btn-sm">
+            <i class="fa-solid fa-camera"></i>
+            {{ '재점검' if r.status == 'done' else '점검하기' }}
+          </a>
+          {% if r.inspections %}
+          <a href="{{ url_for('record_detail', iid=r.inspections[-1].id) }}"
+             class="t-btn t-btn-gray t-btn-sm">
+            <i class="fa-solid fa-eye"></i> 기록 보기
+          </a>
+          {% endif %}
+          <form method="post" action="{{ url_for('restroom_delete', rid=r.id) }}"
+                onsubmit="return confirm('삭제하시겠습니까?')" style="display:inline">
+            <button class="t-btn t-btn-red t-btn-sm" type="submit">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="t-empty" style="background:var(--surface);border-radius:var(--r-xl)">
+    <div class="t-empty-icon">🚻</div>
+    <div class="t-empty-text">등록된 화장실이 없습니다</div>
+    <div class="t-empty-sub">아래 버튼으로 화장실을 추가해 주세요</div>
+  </div>
+  {% endif %}
+
+  <a href="{{ url_for('restroom_add', bid=b.id) }}"
+     class="t-btn t-btn-gray t-btn-full" style="margin-top:10px">
+    <i class="fa-solid fa-plus"></i> 화장실 추가
+  </a>
+</div>
+{% endblock %}

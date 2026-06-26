@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}화장실 관리{% endblock %}
+{% block header_left %}
+<button class="t-back" onclick="history.back()">
+  <i class="fa-solid fa-chevron-left" style="font-size:15px"></i> 화장실 관리
+</button>
+{% endblock %}
+{% block header_actions %}
+<a href="{{ url_for('restroom_new') }}" class="t-header-btn"><i class="fa-solid fa-plus"></i></a>
+<button class="t-header-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
+{% endblock %}
+
+{% block content %}
+<div class="t-section-title">건물별 화장실 현황</div>
+<div style="padding:0 20px">
+  {% for b in buildings %}
+  <div style="margin-bottom:8px">
+    <a href="{{ url_for('building_page', bid=b.id) }}" class="t-list-item"
+       style="background:var(--surface);border-radius:var(--r-xl);display:flex">
+      <div class="t-list-icon" style="background:{{ TEAMS[b.team].bg }}">🏛️</div>
+      <div class="t-list-body">
+        <div class="t-list-title">{{ b.name }}</div>
+        <div class="t-list-sub">
+          <span style="color:{{ TEAMS[b.team].color }};font-weight:700">{{ TEAMS[b.team].name }}</span>
+          · 화장실 {{ b.restrooms|length }}개
+        </div>
+      </div>
+      <div class="t-list-right">
+        <i class="fa-solid fa-chevron-right t-list-chevron"></i>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div style="padding:0 20px 16px">
+  <a href="{{ url_for('restroom_new') }}" class="t-btn t-btn-gray t-btn-full">
+    <i class="fa-solid fa-plus"></i> 화장실 추가
+  </a>
+</div>
+{% endblock %}

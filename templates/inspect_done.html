@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}저장 완료{% endblock %}
+
+{% block header_left %}
+<div class="t-header-title">저장 완료</div>
+{% endblock %}
+
+{% block content %}
+<div class="done-wrap">
+  <div class="done-icon-wrap">
+    <i class="fa-solid fa-check"></i>
+  </div>
+  <div class="done-title">점검 기록 저장됨</div>
+  <div class="done-sub">
+    {{ insp.restroom.building.name }} ·
+    {{ insp.restroom.floor }} {{ insp.restroom.gender }}화장실
+  </div>
+</div>
+
+<!-- Summary card -->
+<div class="t-form">
+  <div class="t-form-group">
+    <div class="t-card-row">
+      <span style="font-size:14px;color:var(--t3)">담당 팀</span>
+      <span class="badge" style="background:{{ TEAMS[insp.team].bg }};color:{{ TEAMS[insp.team].color }}">{{ TEAMS[insp.team].name }}</span>
+    </div>
+    {% if insp.inspector_name %}
+    <div class="t-card-row">
+      <span style="font-size:14px;color:var(--t3)">점검자</span>
+      <span style="font-size:15px;font-weight:600">{{ insp.inspector_name }}</span>
+    </div>
+    {% endif %}
+    <div class="t-card-row">
+      <span style="font-size:14px;color:var(--t3)">체크리스트</span>
+      <span style="font-size:15px;font-weight:700;color:{{ 'var(--green)' if insp.checklist_score == 6 else 'var(--t2)' }}">
+        {{ insp.checklist_score }} / {{ CHECKLIST|length }}
+      </span>
+    </div>
+    <div class="t-card-row">
+      <span style="font-size:14px;color:var(--t3)">사진</span>
+      <span style="font-size:13px">
+        {{ '전 ✓' if insp.before_photo else '전 ✗' }}
+        {{ ' · 후 ✓' if insp.after_photo else ' · 후 ✗' }}
+      </span>
+    </div>
+    <div class="t-card-row">
+      <span style="font-size:14px;color:var(--t3)">조치 여부</span>
+      {% if insp.action_taken %}
+      <span class="badge badge-action">⚠️ 조치 있음</span>
+      {% else %}
+      <span class="badge badge-done">이상 없음</span>
+      {% endif %}
+    </div>
+    <div class="t-card-row" style="border:none">
+      <span style="font-size:14px;color:var(--t3)">완료 상태</span>
+      {% if insp.completed %}
+      <span class="badge badge-done">✓ 완료</span>
+      {% else %}
+      <span class="badge badge-progress">진행중</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="t-form" style="padding-bottom:16px;gap:10px">
+  {% if next_rid %}
+  <a href="{{ url_for('inspect', rid=next_rid) }}" class="t-btn t-btn-primary t-btn-full">
+    <i class="fa-solid fa-arrow-right"></i> 다음 화장실 점검하기
+  </a>
+  {% endif %}
+  <a href="{{ url_for('building_page', bid=insp.restroom.building_id) }}" class="t-btn t-btn-gray t-btn-full">
+    <i class="fa-solid fa-building"></i> {{ insp.restroom.building.name }} 목록으로
+  </a>
+  <a href="{{ url_for('record_detail', iid=insp.id) }}" class="t-btn t-btn-gray t-btn-full">
+    <i class="fa-solid fa-eye"></i> 기록 상세 보기
+  </a>
+</div>
+{% endblock %}

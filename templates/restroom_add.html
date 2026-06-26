@@ -7,22 +7,12 @@
 {% endblock %}
 
 {% block content %}
-<form method="post">
-  <div class="t-section-title">건물 선택</div>
-  <div class="t-form">
-    <div class="t-form-group">
-      <label class="t-form-label">건물</label>
-      <select name="building_id" class="t-input" style="padding-top:8px;padding-bottom:12px" required>
-        <option value="">건물을 선택하세요</option>
-        {% for b in buildings %}
-        <option value="{{ b.id }}" {% if prefill_bid == b.id %}selected{% endif %}>
-          [{{ b.team }}팀] {{ b.name }}
-        </option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
+<div style="padding:16px 20px 0">
+  <div style="font-size:14px;color:var(--t3)">건물</div>
+  <div style="font-size:18px;font-weight:800">{{ b.name }}</div>
+</div>
 
+<form method="post">
   <div class="t-section-title">화장실 정보</div>
   <div class="t-form">
     <div class="t-form-group">
@@ -46,16 +36,14 @@
   </div>
 
   <div class="t-form" style="padding-bottom:16px">
-    <button type="submit" class="t-btn t-btn-primary t-btn-full">등록하기</button>
-    <a href="javascript:history.back()" class="t-btn t-btn-gray t-btn-full">취소</a>
+    <button type="submit" class="t-btn t-btn-primary t-btn-full">추가하기</button>
+    <a href="{{ url_for('building_page', bid=b.id) }}" class="t-btn t-btn-gray t-btn-full">취소</a>
   </div>
 </form>
-
 <script>
 function selGender(g) {
   ['남','여','공용'].forEach(v => {
-    const el = document.getElementById('gopt-'+v);
-    el.className = 'gender-opt' + (v===g ? ' sel-'+v : '');
+    document.getElementById('gopt-'+v).className = 'gender-opt' + (v===g?' sel-'+v:'');
   });
   document.getElementById('genderInput').value = g;
 }

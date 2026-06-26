@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ TEAMS[tid].name }}{% endblock %}
+
+{% block header_left %}
+<button class="t-back" onclick="history.back()">
+  <i class="fa-solid fa-chevron-left" style="font-size:15px"></i>
+  {{ TEAMS[tid].name }}
+</button>
+{% endblock %}
+{% block header_actions %}
+<button class="t-header-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
+{% endblock %}
+
+{% block content %}
+{% set t = TEAMS[tid] %}
+
+<!-- Team info strip -->
+<div style="background:{{ t.color }};padding:20px 20px 24px">
+  <div class="chip-row" style="margin-bottom:10px">
+    {% for m in t.members %}
+    <span style="background:rgba(255,255,255,.25);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700">{{ m }}</span>
+    {% endfor %}
+    {% for p in t.partners %}
+    <span style="background:rgba(255,255,255,.15);color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600">{{ p.icon }} {{ p.name }}</span>
+    {% endfor %}
+  </div>
+  <!-- Route visual -->
+  <div style="display:flex;align-items:center;gap:0">
+    {% for b in t.buildings %}
+    <div style="flex:1;text-align:center">
+      <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.3);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 4px">{{ loop.index }}</div>
+      <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.9);line-height:1.3">{{ b }}</div>
+    </div>
+    {% if not loop.last %}
+    <div style="color:rgba(255,255,255,.5);font-size:11px;padding-bottom:16px;flex-shrink:0">→</div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Buildings list -->
+<div class="t-section-title">🏢 담당 건물</div>
+<div class="t-section">
+  <div class="t-list">
+    {% for b in buildings %}
+    {% set done = b.restrooms|selectattr('inspections')|list|length %}
+    {% set total = b.restrooms|length %}
+    {% set pct = (done / total * 100)|int if total > 0 else 0 %}
+    <a href="{{ url_for('building_page', bid=b.id) }}" class="t-list-item"
+       onclick="saveTeam('{{ tid }}')">
+      <div class="t-list-icon" style="background:{{ t.bg }}">
+        <span style="font-size:18px">🏛️</span>
+      </div>
+      <div class="t-list-body">
+        <div class="t-list-title">{{ b.name }}</div>
+        <div class="t-list-sub" style="margin-top:6px">
+          <div class="t-progress-track" style="height:4px;width:120px;display:inline-block;vertical-align:middle;margin-right:6px">
+            <div class="t-progress-fill" style="width:{{ pct }}%;background:{{ t.color }}"></div>
+          </div>
+          <span>{{ done }}/{{ total }} 완료</span>
+        </div>
+      </div>
+      <div class="t-list-right">
+        {% if total > 0 and done == total %}
+        <span class="badge badge-done">완료</span>
+        {% elif done > 0 %}
+        <span class="badge badge-progress">진행중</span>
+        {% else %}
+        <span class="badge badge-pending">미점검</span>
+        {% endif %}
+        <i class="fa-solid fa-chevron-right t-list-chevron"></i>
+      </div>
+    </a>
+    {% else %}
+    <div class="t-empty">
+      <div class="t-empty-icon">🏢</div>
+      <div class="t-empty-text">등록된 건물이 없습니다</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Quick link to records -->
+<div class="t-section">
+  <a href="{{ url_for('records') }}?team={{ tid }}" class="t-btn t-btn-gray t-btn-full">
+    <i class="fa-solid fa-clipboard-list"></i> {{ t.name }} 점검 기록 보기
+  </a>
+</div>
+
+<script>saveTeam('{{ tid }}');</script>
+{% endblock %}

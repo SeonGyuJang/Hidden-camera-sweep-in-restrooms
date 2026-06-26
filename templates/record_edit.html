@@ -1,148 +1,140 @@
 {% extends "base.html" %}
 {% block title %}기록 수정{% endblock %}
-
 {% block header_left %}
-<a href="{{ url_for('record_detail', iid=insp.id) }}" class="header-back">
-  <i class="fa-solid fa-arrow-left"></i> 수정
-</a>
+<button class="t-back" onclick="history.back()">
+  <i class="fa-solid fa-chevron-left" style="font-size:15px"></i> 수정
+</button>
 {% endblock %}
 
 {% block content %}
-<div class="form-page page-enter">
-  <form method="post">
-
-    <div class="form-section">
-      <div class="form-section-header"><i class="fa-solid fa-users"></i> 팀 / 점검자</div>
-      <div class="form-section-body">
-        <label class="form-label">팀</label>
-        <select name="team" class="form-select" required>
-          {% for tid, t in teams.items() %}
-          <option value="{{ tid }}" {% if insp.team == tid %}selected{% endif %}>{{ t.name }}</option>
-          {% endfor %}
-        </select>
-        <label class="form-label mt-12">점검자 이름</label>
-        <input type="text" name="inspector_name" class="form-control"
-               value="{{ insp.inspector_name or '' }}">
-      </div>
+<form method="post">
+  <div class="t-section-title">기본 정보</div>
+  <div class="t-form">
+    <div class="t-form-group">
+      <label class="t-form-label">담당 팀</label>
+      <select name="team" class="t-input" style="padding-top:8px;padding-bottom:12px">
+        {% for tid, t in TEAMS.items() %}
+        <option value="{{ tid }}" {% if insp.team == tid %}selected{% endif %}>{{ t.name }}</option>
+        {% endfor %}
+      </select>
     </div>
-
-    <div class="form-section">
-      <div class="form-section-header"><i class="fa-solid fa-location-dot"></i> 화장실</div>
-      <div class="form-section-body">
-        <select name="restroom_id" class="form-select" required>
-          {% for r in restrooms %}
-          <option value="{{ r.id }}" {% if r.id == insp.restroom_id %}selected{% endif %}>
-            [{{ r.building.team }}팀] {{ r.building.name }} {{ r.floor }} {{ r.gender }}화장실
-          </option>
-          {% endfor %}
-        </select>
-      </div>
+    <div class="t-form-group">
+      <label class="t-form-label">점검자 이름</label>
+      <input type="text" name="inspector_name" class="t-input" value="{{ insp.inspector_name or '' }}">
     </div>
-
-    <div class="form-section">
-      <div class="form-section-header"><i class="fa-solid fa-camera"></i> 사진 재촬영 (선택)</div>
-      <div class="form-section-body">
-        <div class="photo-grid">
-          <div>
-            <div class="form-label">점검 전</div>
-            {% if insp.before_photo %}
-            <img src="{{ insp.before_photo }}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:8px">
-            {% endif %}
-            <div class="photo-slot" id="beforeSlot" onclick="openCam('before')">
-              <img id="beforeImg" src="" style="display:none">
-              <div id="beforeEmpty">
-                <i class="fa-solid fa-arrow-rotate-right photo-icon"></i>
-                <div class="photo-label">교체하려면 촬영</div>
-              </div>
-              <div class="photo-tag">새 사진</div>
-            </div>
-            <input type="file" id="beforeFile" accept="image/*" capture="environment"
-                   class="d-none" onchange="handleFile(event,'before')">
-            <input type="hidden" name="before_photo" id="beforeData">
-            <button type="button" class="btn btn-secondary btn-full btn-sm mt-8"
-                    onclick="document.getElementById('beforeFile').click()">갤러리</button>
-          </div>
-          <div>
-            <div class="form-label">점검 후</div>
-            {% if insp.after_photo %}
-            <img src="{{ insp.after_photo }}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;margin-bottom:8px">
-            {% endif %}
-            <div class="photo-slot" id="afterSlot" onclick="openCam('after')">
-              <img id="afterImg" src="" style="display:none">
-              <div id="afterEmpty">
-                <i class="fa-solid fa-arrow-rotate-right photo-icon"></i>
-                <div class="photo-label">교체하려면 촬영</div>
-              </div>
-              <div class="photo-tag">새 사진</div>
-            </div>
-            <input type="file" id="afterFile" accept="image/*" capture="environment"
-                   class="d-none" onchange="handleFile(event,'after')">
-            <input type="hidden" name="after_photo" id="afterData">
-            <button type="button" class="btn btn-secondary btn-full btn-sm mt-8"
-                    onclick="document.getElementById('afterFile').click()">갤러리</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-section-header"><i class="fa-solid fa-clipboard-list"></i> 조치 및 특이사항</div>
-      <div class="form-section-body">
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">조치 사항 있음</div>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" name="action_taken" value="1" id="actionToggle"
-                   {% if insp.action_taken %}checked{% endif %}
-                   onchange="document.getElementById('actionWrap').style.display=this.checked?'block':'none'">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div id="actionWrap" style="{{ '' if insp.action_taken else 'display:none' }};padding-top:12px">
-          <textarea name="action_detail" class="form-control" rows="2">{{ insp.action_detail or '' }}</textarea>
-        </div>
-        <div style="padding-top:14px">
-          <label class="form-label">특이사항</label>
-          <textarea name="notes" class="form-control" rows="3">{{ insp.notes or '' }}</textarea>
-        </div>
-        <div class="toggle-row" style="margin-top:14px">
-          <div class="toggle-label">점검 완료</div>
-          <label class="toggle-switch">
-            <input type="checkbox" name="completed" value="1" {% if insp.completed %}checked{% endif %}>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary btn-full mb-16">저장</button>
-    <a href="{{ url_for('record_detail', iid=insp.id) }}" class="btn btn-secondary btn-full">취소</a>
-  </form>
-</div>
-
-<div class="camera-modal hidden" id="camModal">
-  <div class="camera-view">
-    <video id="camVideo" autoplay playsinline muted></video>
-    <div class="camera-label" id="camLabel">촬영</div>
   </div>
-  <div class="camera-bar">
-    <button class="camera-close" onclick="closeCam()"><i class="fa-solid fa-xmark"></i></button>
-    <button class="camera-shutter" onclick="snapPhoto()"></button>
-    <button class="camera-flip" onclick="flipCam()"><i class="fa-solid fa-rotate"></i></button>
+
+  <div class="t-section-title">사진 재촬영 (기존 사진 유지 시 건너뜀)</div>
+  <div class="t-form">
+    <div class="t-form-group">
+      <div class="photo-pair">
+        {% for which, label in [('before','점검 전'),('after','점검 후')] %}
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase">{{ label }}</div>
+          {% set photo = insp.before_photo if which == 'before' else insp.after_photo %}
+          {% if photo %}
+          <div style="position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:4/3;margin-bottom:6px">
+            <img src="{{ photo }}" style="width:100%;height:100%;object-fit:cover">
+            <div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:6px">현재</div>
+          </div>
+          {% endif %}
+          <div class="photo-slot" id="{{ which }}Slot" onclick="camOpen('{{ which }}','{{ label }}')">
+            <img id="{{ which }}Img" src="" style="display:none">
+            <div id="{{ which }}Empty" style="text-align:center">
+              <div class="photo-slot-icon"><i class="fa-solid fa-arrow-rotate-right"></i></div>
+              <div class="photo-slot-label">교체</div>
+            </div>
+            <div class="photo-tag">새 사진</div>
+          </div>
+          <input type="file" id="{{ which }}File" accept="image/*" capture="environment"
+                 style="display:none" onchange="filePhoto(event,'{{ which }}')">
+          <input type="hidden" name="{{ which }}_photo" id="{{ which }}Data">
+          <button type="button" onclick="document.getElementById('{{ which }}File').click()"
+                  style="width:100%;margin-top:6px;padding:8px;background:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer">갤러리</button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
-  <canvas id="camCanvas" style="display:none"></canvas>
-</div>
+
+  <div class="t-section-title">체크리스트</div>
+  <div class="t-form">
+    <div class="t-checklist">
+      {% for key, name, desc in CHECKLIST %}
+      <label class="t-check-item" onclick="toggleCheck('{{ key }}')">
+        <div class="t-check-box {% if insp['chk_' + key] %}checked{% endif %}" id="chkBox_{{ key }}">
+          <i class="fa-solid fa-check" {% if not insp['chk_' + key] %}style="display:none"{% endif %} id="chkIcon_{{ key }}"></i>
+        </div>
+        <input type="checkbox" name="chk_{{ key }}" id="chk_{{ key }}" style="display:none"
+               {% if insp['chk_' + key] %}checked{% endif %}>
+        <div>
+          <div class="t-check-title">{{ name }}</div>
+          <div class="t-check-sub">{{ desc }}</div>
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="t-section-title">조치 및 특이사항</div>
+  <div class="t-form">
+    <div class="t-form-group">
+      <div class="t-toggle-row">
+        <div>
+          <div class="t-toggle-label">⚠️ 조치 사항 있음</div>
+        </div>
+        <label class="t-toggle">
+          <input type="checkbox" name="action_taken" id="actionToggle" value="1"
+                 {% if insp.action_taken %}checked{% endif %}
+                 onchange="document.getElementById('aw').style.display=this.checked?'':'none'">
+          <span class="t-toggle-slider"></span>
+        </label>
+      </div>
+      <div id="aw" style="{{ '' if insp.action_taken else 'display:none' }}">
+        <div class="t-form-divider"></div>
+        <label class="t-form-label">조치 내용</label>
+        <textarea name="action_detail" class="t-textarea">{{ insp.action_detail or '' }}</textarea>
+      </div>
+    </div>
+    <div class="t-form-group">
+      <label class="t-form-label">특이사항</label>
+      <textarea name="notes" class="t-textarea">{{ insp.notes or '' }}</textarea>
+    </div>
+    <div class="t-form-group">
+      <div class="t-toggle-row">
+        <div class="t-toggle-label">점검 완료</div>
+        <label class="t-toggle">
+          <input type="checkbox" name="completed" value="1" {% if insp.completed %}checked{% endif %}>
+          <span class="t-toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-form" style="padding-bottom:16px">
+    <button type="submit" class="t-btn t-btn-primary t-btn-full">저장</button>
+    <a href="{{ url_for('record_detail', iid=insp.id) }}" class="t-btn t-btn-gray t-btn-full">취소</a>
+  </div>
+</form>
 
 <script>
-let camTarget=null,camStream=null,camFacing='environment';
-function openCam(t){camTarget=t;document.getElementById('camModal').classList.remove('hidden');document.body.style.overflow='hidden';startStream();}
-function startStream(){stopStream();navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing}}).then(s=>{camStream=s;document.getElementById('camVideo').srcObject=s;}).catch(()=>{alert('카메라 사용 불가. 갤러리를 이용해 주세요.');closeCam();});}
-function stopStream(){if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}document.getElementById('camVideo').srcObject=null;}
-function flipCam(){camFacing=camFacing==='environment'?'user':'environment';startStream();}
-function snapPhoto(){const v=document.getElementById('camVideo'),c=document.getElementById('camCanvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);setPhoto(camTarget,c.toDataURL('image/jpeg',.88));closeCam();}
-function closeCam(){stopStream();document.getElementById('camModal').classList.add('hidden');document.body.style.overflow='';}
-function handleFile(e,t){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setPhoto(t,ev.target.result);r.readAsDataURL(f);}
-function setPhoto(t,d){document.getElementById(t+'Data').value=d;const i=document.getElementById(t+'Img');i.src=d;i.style.display='block';document.getElementById(t+'Empty').style.display='none';}
+window._camCallback = function(t, d) { setPhoto(t, d); };
+function setPhoto(t, d) {
+  document.getElementById(t+'Data').value=d;
+  const i=document.getElementById(t+'Img'); i.src=d; i.style.display='block';
+  document.getElementById(t+'Empty').style.display='none';
+}
+function filePhoto(e, t) {
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=ev=>setPhoto(t,ev.target.result); r.readAsDataURL(f);
+}
+function toggleCheck(key) {
+  const cb=document.getElementById('chk_'+key);
+  const box=document.getElementById('chkBox_'+key);
+  const icon=document.getElementById('chkIcon_'+key);
+  cb.checked=!cb.checked;
+  if(cb.checked){box.classList.add('checked');icon.style.display='';}
+  else{box.classList.remove('checked');icon.style.display='none';}
+}
 </script>
 {% endblock %}

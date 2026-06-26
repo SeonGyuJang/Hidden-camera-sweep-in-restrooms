@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}점검하기{% endblock %}
+
+{% block header_left %}
+<button class="t-back" onclick="history.back()">
+  <i class="fa-solid fa-chevron-left" style="font-size:15px"></i>
+  점검 기록
+</button>
+{% endblock %}
+{% block header_actions %}
+<button class="t-header-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
+{% endblock %}
+
+{% block content %}
+{% set t = TEAMS[restroom.building.team] %}
+
+<!-- Restroom context bar -->
+<div style="background:{{ t.color }};padding:14px 20px;display:flex;align-items:center;gap:10px">
+  <div style="flex:1">
+    <div style="font-size:12px;color:rgba(255,255,255,.8);font-weight:600">{{ restroom.building.name }}</div>
+    <div style="font-size:17px;font-weight:800;color:#fff;margin-top:1px">
+      {{ restroom.floor }}
+      <span style="background:rgba(255,255,255,.25);font-size:12px;padding:2px 8px;border-radius:10px;margin-left:6px">{{ restroom.gender }}</span>
+    </div>
+  </div>
+  <div>
+    <span class="badge" style="background:rgba(255,255,255,.25);color:#fff">{{ t.name }}</span>
+  </div>
+</div>
+
+<form method="post" id="inspectForm">
+
+  <!-- Team & Inspector -->
+  <div class="t-section-title">👤 점검자 정보</div>
+  <div class="t-form">
+    <div class="t-form-group">
+      <label class="t-form-label">담당 팀</label>
+      <select name="team" id="teamSel" class="t-input" style="padding-top:8px;padding-bottom:12px">
+        {% for tid, tm in TEAMS.items() %}
+        <option value="{{ tid }}"
+          {% if prev and prev.team == tid %}selected
+          {% elif not prev and restroom.building.team == tid %}selected{% endif %}>
+          {{ tm.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="t-form-group">
+      <label class="t-form-label">점검자 이름</label>
+      <input type="text" name="inspector_name" class="t-input"
+             placeholder="이름을 입력하세요"
+             value="{{ prev.inspector_name if prev else '' }}">
+    </div>
+  </div>
+
+  <!-- GPS -->
+  <div class="t-section-title">📍 촬영 위치</div>
+  <div class="t-form">
+    <div class="t-form-group" style="padding:14px 16px">
+      <div id="gpsStatus" class="gps-chip gps-wait" style="width:100%">
+        <i class="fa-solid fa-satellite-dish fa-spin"></i> 위치 확인 중…
+      </div>
+      <div style="font-size:12px;color:var(--t3);margin-top:8px">
+        GPS 좌표가 자동으로 기록됩니다.
+      </div>
+      <input type="hidden" name="photo_lat" id="photoLat">
+      <input type="hidden" name="photo_lng" id="photoLng">
+    </div>
+  </div>
+
+  <!-- Photos -->
+  <div class="t-section-title">📷 점검 사진</div>
+  <div class="t-form">
+    <div class="t-form-group">
+      <div class="photo-pair">
+        <!-- Before -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">점검 전</div>
+          <div class="photo-slot" id="beforeSlot" onclick="camOpen('before','📷 점검 전')">
+            <img id="beforeImg" src="" style="display:none">
+            <div id="beforeEmpty" style="text-align:center">
+              <div class="photo-slot-icon"><i class="fa-solid fa-camera"></i></div>
+              <div class="photo-slot-label">터치하여 촬영</div>
+            </div>
+            <div class="photo-tag">점검 전</div>
+            <button type="button" class="photo-del" id="beforeDel" style="display:none"
+                    onclick="delPhoto(event,'before')"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <input type="file" id="beforeFile" accept="image/*" capture="environment"
+                 class="d-none" style="display:none" onchange="filePhoto(event,'before')">
+          <input type="hidden" name="before_photo" id="beforeData">
+          <button type="button" onclick="document.getElementById('beforeFile').click()"
+                  style="width:100%;margin-top:6px;padding:8px;background:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer">
+            갤러리
+          </button>
+        </div>
+        <!-- After -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">점검 후</div>
+          <div class="photo-slot" id="afterSlot" onclick="camOpen('after','📷 점검 후')">
+            <img id="afterImg" src="" style="display:none">
+            <div id="afterEmpty" style="text-align:center">
+              <div class="photo-slot-icon"><i class="fa-solid fa-camera"></i></div>
+              <div class="photo-slot-label">터치하여 촬영</div>
+            </div>
+            <div class="photo-tag">점검 후</div>
+            <button type="button" class="photo-del" id="afterDel" style="display:none"
+                    onclick="delPhoto(event,'after')"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <input type="file" id="afterFile" accept="image/*" capture="environment"
+                 class="d-none" style="display:none" onchange="filePhoto(event,'after')">
+          <input type="hidden" name="after_photo" id="afterData">
+          <button type="button" onclick="document.getElementById('afterFile').click()"
+                  style="width:100%;margin-top:6px;padding:8px;background:var(--bg);border:none;border-radius:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer">
+            갤러리
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checklist -->
+  <div class="t-section-title">✅ 점검 체크리스트</div>
+  <div class="t-form">
+    <div class="t-checklist">
+      {% for key, name, desc in CHECKLIST %}
+      <label class="t-check-item" onclick="toggleCheck('{{ key }}')">
+        <div class="t-check-box" id="chkBox_{{ key }}">
+          <i class="fa-solid fa-check" style="display:none" id="chkIcon_{{ key }}"></i>
+        </div>
+        <input type="checkbox" name="chk_{{ key }}" id="chk_{{ key }}"
+               style="display:none"
+               {% if prev and prev['chk_' + key] %}checked{% endif %}>
+        <div>
+          <div class="t-check-title">{{ name }}</div>
+          <div class="t-check-sub">{{ desc }}</div>
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+    <div id="checkScore" style="text-align:center;padding:12px;font-size:13px;color:var(--t3);font-weight:600">
+      0 / {{ CHECKLIST|length }} 항목 확인됨
+    </div>
+  </div>
+
+  <!-- Action / Notes -->
+  <div class="t-section-title">📝 조치 및 특이사항</div>
+  <div class="t-form">
+    <div class="t-form-group">
+      <div class="t-toggle-row">
+        <div>
+          <div class="t-toggle-label">⚠️ 조치 사항 있음</div>
+          <div class="t-toggle-sub">불법 장치 발견 또는 시설 이상</div>
+        </div>
+        <label class="t-toggle">
+          <input type="checkbox" name="action_taken" id="actionToggle" value="1"
+                 {% if prev and prev.action_taken %}checked{% endif %}
+                 onchange="toggleActionDetail(this)">
+          <span class="t-toggle-slider"></span>
+        </label>
+      </div>
+      <div id="actionDetailWrap" style="{{ '' if prev and prev.action_taken else 'display:none' }}">
+        <div class="t-form-divider"></div>
+        <label class="t-form-label">조치 내용</label>
+        <textarea name="action_detail" class="t-textarea"
+                  placeholder="어떤 조치를 취했는지 상세히 기술해 주세요">{{ prev.action_detail if prev else '' }}</textarea>
+      </div>
+    </div>
+    <div class="t-form-group">
+      <label class="t-form-label">특이사항 메모</label>
+      <textarea name="notes" class="t-textarea"
+                placeholder="점검 중 특이사항을 자유롭게 기록하세요">{{ prev.notes if prev else '' }}</textarea>
+    </div>
+    <div class="t-form-group">
+      <div class="t-toggle-row">
+        <div>
+          <div class="t-toggle-label">점검 완료</div>
+          <div class="t-toggle-sub">이 화장실 점검을 완료했습니다</div>
+        </div>
+        <label class="t-toggle">
+          <input type="checkbox" name="completed" value="1" checked>
+          <span class="t-toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="t-form" style="padding-bottom:16px">
+    <button type="submit" class="t-btn t-btn-primary t-btn-full">
+      <i class="fa-solid fa-check"></i> 점검 기록 저장
+    </button>
+    <a href="javascript:history.back()" class="t-btn t-btn-gray t-btn-full">취소</a>
+  </div>
+
+</form>
+
+<script>
+// GPS
+(function() {
+  const el = document.getElementById('gpsStatus');
+  if (!navigator.geolocation) {
+    el.className = 'gps-chip gps-error';
+    el.innerHTML = '<i class="fa-solid fa-ban"></i> GPS 미지원';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(pos => {
+    document.getElementById('photoLat').value = pos.coords.latitude;
+    document.getElementById('photoLng').value = pos.coords.longitude;
+    const lat = pos.coords.latitude.toFixed(5), lng = pos.coords.longitude.toFixed(5);
+    el.className = 'gps-chip gps-ok';
+    el.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${lat}, ${lng}`;
+  }, () => {
+    el.className = 'gps-chip gps-error';
+    el.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 위치 확인 불가';
+  }, {timeout: 8000});
+})();
+
+// Photo callbacks
+window._camCallback = function(target, dataUrl) { setPhoto(target, dataUrl); };
+
+function setPhoto(t, d) {
+  document.getElementById(t+'Data').value = d;
+  const img = document.getElementById(t+'Img');
+  img.src = d; img.style.display = 'block';
+  document.getElementById(t+'Empty').style.display = 'none';
+  document.getElementById(t+'Del').style.display = 'flex';
+}
+function delPhoto(e, t) {
+  e.stopPropagation();
+  document.getElementById(t+'Data').value = '';
+  const img = document.getElementById(t+'Img');
+  img.src = ''; img.style.display = 'none';
+  document.getElementById(t+'Empty').style.display = '';
+  document.getElementById(t+'Del').style.display = 'none';
+  document.getElementById(t+'File').value = '';
+}
+function filePhoto(e, t) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => setPhoto(t, ev.target.result);
+  r.readAsDataURL(f);
+}
+
+// Checklist
+const totalItems = {{ CHECKLIST|length }};
+function toggleCheck(key) {
+  const cb = document.getElementById('chk_' + key);
+  const box = document.getElementById('chkBox_' + key);
+  const icon = document.getElementById('chkIcon_' + key);
+  cb.checked = !cb.checked;
+  if (cb.checked) {
+    box.classList.add('checked');
+    icon.style.display = '';
+  } else {
+    box.classList.remove('checked');
+    icon.style.display = 'none';
+  }
+  updateScore();
+}
+function updateScore() {
+  const checked = document.querySelectorAll('[id^="chk_"]:checked').length;
+  const el = document.getElementById('checkScore');
+  el.textContent = `${checked} / ${totalItems} 항목 확인됨`;
+  el.style.color = checked === totalItems ? 'var(--green)' : 'var(--t3)';
+}
+
+// Init checkboxes state from prev
+document.querySelectorAll('[id^="chk_"]').forEach(cb => {
+  if (cb.checked) {
+    const key = cb.id.replace('chk_', '');
+    document.getElementById('chkBox_' + key).classList.add('checked');
+    document.getElementById('chkIcon_' + key).style.display = '';
+  }
+});
+updateScore();
+
+// Action detail toggle
+function toggleActionDetail(cb) {
+  document.getElementById('actionDetailWrap').style.display = cb.checked ? '' : 'none';
+}
+
+// Team memory
+document.getElementById('teamSel').addEventListener('change', function() {
+  saveTeam(this.value);
+});
+
+// Auto-load team from localStorage
+const storedTeam = loadTeam();
+if (storedTeam) {
+  const sel = document.getElementById('teamSel');
+  if ([...sel.options].some(o => o.value === storedTeam)) {
+    sel.value = storedTeam;
+  }
+}
+</script>
+{% endblock %}

@@ -39,7 +39,8 @@
   --r-xl: 20px;
 
   /* Layout */
-  --header-h: 80px;
+
+  --header-h: 56px;
   --nav-h:    64px;
   --safe-b:   env(safe-area-inset-bottom, 0px);
 }
@@ -76,10 +77,10 @@ body {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .t-header-title .ku-mark {
-  font-size: 11px; font-weight: 800;
-  background: var(--primary); color: #fff;
-  padding: 2px 6px; border-radius: 6px;
-  letter-spacing: .3px;
+  font-size: 12px; font-weight: 700;
+  color: var(--t1);
+  letter-spacing: .1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .t-header-actions { display: flex; gap: 4px; }
 .t-header-btn {
